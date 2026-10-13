@@ -15,23 +15,27 @@ cd language-coach
 ./run.sh                 # http://localhost:51121
 ```
 
-1. **Générer le mot de passe du site** — sans lui, la page de connexion refuse
-   tout le monde — et le coller dans un `.env` à côté de `run.sh`. Le fichier est
-   lu automatiquement au démarrage, rien à exporter :
+1. **Au premier lancement**, `./run.sh` crée le fichier `.env` à partir de
+   `.env.example` et **demande ce qui manque** : le mot de passe du site (saisie
+   masquée, seul son hash est écrit) puis la clé Cartesia. Entrée vide = à faire
+   plus tard, et `./run.sh setup` repose les questions quand vous voulez :
    ```bash
-   ./run.sh hash            # affiche LC_PASSWORD_HASH=scrypt$...
+   ./run.sh setup           # repose les questions de configuration
+   ./run.sh hash            # équivalent manuel : affiche la ligne LC_PASSWORD_HASH
    ```
-   Collez la ligne dans `.env` **en retirant le `#` du début** (le modèle
-   `.env.example` l'a commentée pour ne pas configurer un mot de passe par
-   défaut). Marche à l'identique sous Linux, macOS et Git Bash.
+   La clé Cartesia se crée sur **https://play.cartesia.ai/keys** (clé standard,
+   de la forme `sk_car_…`) ; elle est vérifiée auprès de l'API au moment de la
+   saisie, et refusée sans blocage si elle ne répond pas.
 2. **Ouvrir `http://localhost:51121`**, se connecter, puis cliquer sur
    **Connexion Google** (`/oauth/login`) : c'est le chemin d'accès au modèle
    Gemini, via l'abonnement Antigravity, sans clé API. Le jeton reste dans
    `data/`, il ne part jamais dans le navigateur. L'application le réclame
    d'elle-même (dernier écran de la mise en route, bandeau dans le fil, et
    Paramètres) tant qu'il manque.
-3. **`CARTESIA_API_KEY` dans `.env`** pour que le texte de la langue cible soit
-   audible, puis choisir la voix dans les Paramètres du site.
+3. **La voix** (`CARTESIA_API_KEY`) : demandée au premier lancement comme le mot
+   de passe, créée sur **https://play.cartesia.ai/keys**. Le texte de la langue
+   cible devient alors audible dans le fil (cliquable, vitesse normale ou lente),
+   et la voix se choisit dans les Paramètres du site.
 4. **Suivre la mise en route** (`/onboarding`) : langue, objectif, niveau,
    cadence, échéance éventuelle, et — si vous le souhaitez — des vidéos d'écoute
    issues d'une vraie recherche. Le dernier écran propose la **connexion Google**

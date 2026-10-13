@@ -21,7 +21,9 @@ cd language-coach
 ./run.sh
 ```
 
-Le premier lancement installe tout puis affiche `http://localhost:51121`.
+Le premier lancement crée l'environnement, **crée le fichier `.env` à partir de
+`.env.example`** et demande ce qui manque (mot de passe du site, clé Cartesia) —
+voir la section suivante. Il affiche ensuite `http://localhost:51121`.
 **Le port 51121 n'est pas un détail** : la redirection OAuth de Google est
 enregistrée dessus pour l'application Antigravity. Si ce port est occupé chez
 vous, vous pouvez changer de port (`LC_PORT=...`) mais la connexion Google
@@ -32,24 +34,28 @@ vous, vous pouvez changer de port (`LC_PORT=...`) mais la connexion Google
 `./run.sh` fonctionne tel quel : il détecte `.venv/Scripts/python.exe`. Si le
 script perd ses droits d'exécution, `bash run.sh` marche aussi.
 
-## 3. Les trois réglages à faire une fois
+## 3. Ce que le premier lancement demande
 
-Dans un fichier `.env` à côté de `run.sh` (voir `.env.example`, qui liste tout).
-**Ce fichier est lu automatiquement** au démarrage de l'application : pas besoin
-de l'exporter dans le shell, et une variable déjà présente dans l'environnement
-garde la priorité.
+Le fichier `.env` n'est pas à écrire à la main : `./run.sh` le crée (copie de
+`.env.example`) et **demande seulement ce qui manque**. La saisie est masquée, et
+les valeurs passent par le clavier, pas par la ligne de commande — elles ne
+finissent donc pas dans l'historique du shell.
 
-1. **Mot de passe du site** — sans lui, la page de connexion refuse tout le
-   monde :
-   ```bash
-   ./run.sh hash          # affiche LC_PASSWORD_HASH=scrypt$...
-   ```
-   Collez cette ligne dans `.env` **en retirant le `#` du début** : le modèle
-   `.env.example` l'a commentée pour ne pas installer un mot de passe par défaut.
-   Le mot de passe lui-même n'est jamais stocké, seul son hash. Relancez
-   `./run.sh` après modification du `.env` (il n'est lu qu'au démarrage).
-2. **Voix** — `CARTESIA_API_KEY=...`. La voix par langue se choisit ensuite dans
-   les Paramètres du site (elle est résolue toute seule au premier usage).
+- `./run.sh setup` : repose les questions à tout moment.
+- Sans terminal interactif (service détaché, conteneur), rien n'est demandé : un
+  court état part dans le journal et l'application démarre.
+- Le fichier est ensuite lu automatiquement au démarrage ; une variable déjà
+  exportée dans le shell garde la priorité sur lui.
+
+1. **Mot de passe du site** (obligatoire) — saisi masqué au clavier, seul son
+   hash est écrit dans le fichier. Sans lui, la page de connexion refuse tout le
+   monde, et le dit explicitement. Équivalent manuel : `./run.sh hash`.
+2. **Clé Cartesia** (facultatif) — c'est elle qui rend la langue cible audible.
+   Elle se crée sur **https://play.cartesia.ai/keys** : se connecter au tableau de
+   bord Cartesia, section **API Keys**, créer une clé standard (de la forme
+   `sk_car_…`). Elle est vérifiée auprès de l'API au moment de la saisie ; si elle
+   ne répond pas, elle est conservée avec un avertissement plutôt que refusée.
+   Sans clé : tout fonctionne, sauf le son.
 3. **Modèle** — rien à faire par défaut : ouvrez `http://localhost:51121`,
    connectez-vous, puis cliquez sur le lien **Connexion Google** (`/oauth/login`).
    Le jeton reste dans `data/`, il ne part jamais dans le navigateur.
@@ -116,6 +122,10 @@ Tout vit dans `data/` (ignoré par git) : `coach.db` (fils, messages, carnet
 versionné), `audio/` (vocaux, prises, extraits de synthèse en cache),
 `settings.json` (fournisseur, modèle, voix, fuseau), `antigravity_token.json`
 (jeton OAuth — **à ne jamais partager**).
+
+À côté, le fichier `.env` porte les secrets (hash du mot de passe, clé Cartesia)
+et n'est créé qu'avec les droits du propriétaire. Il est ignoré par git : ne le
+mettez jamais dans un dépôt ni dans une sauvegarde partagée.
 
 Sauvegarder = copier `data/`. Supprimer le projet = supprimer le dossier (le
 `data/` avec lui). Mise à jour = `git pull` puis `./run.sh` (les dépendances se
