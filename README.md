@@ -15,11 +15,15 @@ cd language-coach
 ./run.sh                 # http://127.0.0.1:51121
 ```
 
-1. **Générer le mot de passe du site** (sans lui, la page de connexion refuse
-   tout le monde) puis le coller dans un `.env` à côté de `run.sh` :
+1. **Générer le mot de passe du site** — sans lui, la page de connexion refuse
+   tout le monde — et le coller dans un `.env` à côté de `run.sh`. Le fichier est
+   lu automatiquement au démarrage, rien à exporter :
    ```bash
-   .venv/bin/python -m app.auth     # → LC_PASSWORD_HASH=scrypt$...
+   ./run.sh hash            # affiche LC_PASSWORD_HASH=scrypt$...
    ```
+   Collez la ligne dans `.env` **en retirant le `#` du début** (le modèle
+   `.env.example` l'a commentée pour ne pas configurer un mot de passe par
+   défaut). Marche à l'identique sous Linux, macOS et Git Bash.
 2. **Ouvrir `http://127.0.0.1:51121`**, se connecter, puis cliquer sur
    **Connexion Google** (`/oauth/login`) : c'est le chemin d'accès au modèle
    Gemini, via l'abonnement Antigravity, sans clé API. Le jeton reste dans
@@ -35,7 +39,8 @@ enregistrée dessus. Changer de port oblige à refaire la connexion Google.
 
 ### Ce qui dégrade quoi
 
-- Sans **mot de passe** : personne n'entre.
+- Sans **mot de passe configuré** : la page de connexion explique pourquoi (503)
+  au lieu de refuser en boucle ; `./run.sh` prévient aussi au démarrage.
 - Sans **connexion Google** (ou sans `LC_PROVIDER=opencode` +
   `OPENCODE_API_KEY`) : l'interface répond, mais aucune séance ne démarre.
 - Sans **clé Cartesia** : tout fonctionne, sauf le son — le texte de la langue
