@@ -10,7 +10,7 @@ Mise en route détaillée : **[QUICKSTART.md](QUICKSTART.md)**.
 ## Démarrage rapide
 
 ```bash
-git clone git@github.com:xelema/language-coach.git
+git clone https://github.com/xelema/language-coach.git
 cd language-coach
 ./run.sh                 # http://127.0.0.1:51121
 ```
