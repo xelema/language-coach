@@ -36,10 +36,11 @@ boucle d'outils, le chrono, l'upload et l'écoute réelle des vocaux
 
 ## 2. Ce qui est spécifique et à retirer
 
-**Traces personnelles** (`grep -ri yejin` → 1 fichier ; « Florian » → 17 fichiers) :
+**Traces personnelles** (nom de l'apprenant dans 17 fichiers, nom de son
+entourage dans 1) :
 
-- `coach/coach.md` : identité du coach, l'amie coréenne, le paquet `dm-*`
-  (« DM Yejin », ~300 cartes), l'échéance 8 sept. → 8 déc. 2026, le syndrome
+- `coach/coach.md` : identité du coach, une personne de l'entourage, le paquet
+  `dm-*` de cartes issu d'échanges privés, l'échéance 8 sept. → 8 déc. 2026, le syndrome
   LoL/Minecraft, l'historique J1/J2, le rappel à l'ordre après absence.
 - `coach/programme.md` : « Campagne coréen · 8 septembre → 8 décembre 2026 »,
   le calendrier 13 semaines, le bilan final du 8 décembre, le réglage « après

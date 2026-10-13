@@ -1,0 +1,33 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connexion — coach de langue</title>
+<script>if ((localStorage.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")) === "dark") document.documentElement.style.cssText = "color-scheme: dark; background: #15171c; color: #e6e1d8";</script>
+<style>
+  body { font: 16px system-ui; max-width: 320px; margin: 4rem auto; padding: 0 1rem; }
+  h1 { font-size: 1.3rem; }
+  form { display: flex; flex-direction: column; gap: .75rem; }
+  input, button { padding: .6rem; font: inherit; }
+  #err { color: light-dark(#b00, #f28b82); min-height: 1.2em; margin: 0; }
+</style>
+<h1>Coach de langue</h1>
+<form>
+  <input type="password" autofocus placeholder="Mot de passe" autocomplete="current-password">
+  <button>Se connecter</button>
+  <p id="err"></p>
+</form>
+<script>
+  const form = document.querySelector("form"), input = form.querySelector("input"), err = document.getElementById("err");
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    err.textContent = "";
+    const res = await fetch("/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: input.value }),
+    });
+    if (res.ok) return location.href = "/";
+    err.textContent = res.status === 429 ? "Trop d'essais, réessayez plus tard." : "Mot de passe incorrect.";
+    input.value = "";
+  };
+</script>

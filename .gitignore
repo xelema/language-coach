@@ -5,5 +5,7 @@ __pycache__/
 .run/
 .env
 .env.local
+data/
+*.apkg
 dist/
 build/
