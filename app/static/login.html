@@ -27,7 +27,11 @@
       body: JSON.stringify({ password: input.value }),
     });
     if (res.ok) return location.href = "/";
-    err.textContent = res.status === 429 ? "Trop d'essais, réessayez plus tard." : "Mot de passe incorrect.";
+    const data = await res.json().catch(() => ({}));
+    err.textContent = res.status === 429 ? "Trop d'essais, réessayez plus tard."
+      : res.status === 503 ? (data.detail || "Aucun mot de passe configuré côté serveur.")
+      : "Mot de passe incorrect. Si tu viens de le configurer, vérifie que la ligne "
+        + "LC_PASSWORD_HASH n'est pas commentée dans .env et relance ./run.sh.";
     input.value = "";
   };
 </script>

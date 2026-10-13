@@ -57,6 +57,13 @@ def login(request: Request, body: dict):
     ip = request.client.host if request.client else "?"
     if auth.throttled(ip):
         return JSONResponse({"detail": "too many attempts"}, status_code=429)
+    if not auth.configured():
+        # Cause la plus fréquente d'un « mot de passe refusé » : rien à comparer.
+        return JSONResponse(
+            {"detail": "Aucun mot de passe configuré côté serveur : renseigner LC_PASSWORD_HASH "
+                       "dans le fichier .env (la commande « ./run.sh hash » l'affiche), "
+                       "sans le # en début de ligne."},
+            status_code=503)
     ok = auth.check_password(body.get("password", ""))
     auth.record_attempt(ip, ok)
     if not ok:

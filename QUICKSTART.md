@@ -34,14 +34,20 @@ script perd ses droits d'exécution, `bash run.sh` marche aussi.
 
 ## 3. Les trois réglages à faire une fois
 
-Dans un fichier `.env` à côté de `run.sh` (voir `.env.example`, qui liste tout) :
+Dans un fichier `.env` à côté de `run.sh` (voir `.env.example`, qui liste tout).
+**Ce fichier est lu automatiquement** au démarrage de l'application : pas besoin
+de l'exporter dans le shell, et une variable déjà présente dans l'environnement
+garde la priorité.
 
 1. **Mot de passe du site** — sans lui, la page de connexion refuse tout le
    monde :
    ```bash
-   python3 -m app.auth        # ou: .venv/bin/python -m app.auth
-   # colle la ligne LC_PASSWORD_HASH=... obtenue dans .env
+   ./run.sh hash          # affiche LC_PASSWORD_HASH=scrypt$...
    ```
+   Collez cette ligne dans `.env` **en retirant le `#` du début** : le modèle
+   `.env.example` l'a commentée pour ne pas installer un mot de passe par défaut.
+   Le mot de passe lui-même n'est jamais stocké, seul son hash. Relancez
+   `./run.sh` après modification du `.env` (il n'est lu qu'au démarrage).
 2. **Voix** — `CARTESIA_API_KEY=...`. La voix par langue se choisit ensuite dans
    les Paramètres du site (elle est résolue toute seule au premier usage).
 3. **Modèle** — rien à faire par défaut : ouvrez `http://127.0.0.1:51121`,
@@ -113,6 +119,15 @@ réinstallent si elles ont changé).
   `LANGUAGE` (copiez `app/languages/japanese.py`). Écriture cible, voix Cartesia,
   registres, aide à la saisie, ressources, notes pédagogiques : tout est là.
   Aucun autre fichier à modifier, le paquet est découvert au démarrage.
+- **Mot de passe refusé (401)** alors qu'il est écrit dans `.env` : la ligne est
+  probablement encore commentée (`# LC_PASSWORD_HASH=...`) ou le serveur n'a pas
+  été relancé depuis la modification. Si le message affiché est « Aucun mot de
+  passe configuré », c'est que l'application ne trouve pas `LC_PASSWORD_HASH` :
+  vérifier le nom du fichier (`.env`, pas `.env.txt`) et son emplacement (à côté
+  de `run.sh`).
+- **`./run.sh hash` n'existe pas** : le dépôt est antérieur à l'ajout de cette
+  commande (`git pull`) — sinon, utiliser l'interpréteur du venv, qui n'est pas
+  au même endroit sous Windows (`.venv/Scripts/python.exe`, pas `.venv/bin/`).
 - **Le port 51121 est pris** : `ss -ltnp | grep 51121` (Linux) ou
   `netstat -ano | findstr 51121` (Windows), puis libérez-le — la connexion
   Google a besoin de ce port.
