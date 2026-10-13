@@ -87,6 +87,23 @@ class OnboardingTest(unittest.TestCase):
             self.assertEqual(res.json()["candidates"][0]["title"], CANDIDATE["title"])
         self.assertEqual(self.client.post("/api/resource-search", json={"language": "de"}).status_code, 400)
 
+    def test_profile_exposes_the_model_access_state(self):
+        """L'interface s'en sert pour réclamer la connexion Google avant l'échec."""
+        self.onboard()
+        with patch("app.main.gemini.has_token", return_value=False):
+            without = self.client.get("/api/profile").json()
+            self.assertFalse(without["model_ready"])
+            self.assertEqual((without["provider"], without["oauth_url"]), ("gemini", "/oauth/login"))
+        with patch("app.main.gemini.has_token", return_value=True):
+            self.assertTrue(self.client.get("/api/profile").json()["model_ready"])
+
+    def test_onboarding_without_audio_still_works(self):
+        """L'écoute et la parole se déclarent à chaque séance, pas à la création."""
+        res = self.client.post("/api/onboarding", json={
+            "language": "ko", "profile": {"objective": "lire des webtoons", "level": "A0"}})
+        self.assertEqual(res.status_code, 200, res.text)
+        self.assertIsNone(res.json()["profile"]["audio"])
+
     def test_audio_declared_at_onboarding_is_reused_by_the_next_session(self):
         self.onboard()
         session = self.client.post("/api/session").json()

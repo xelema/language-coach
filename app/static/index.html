@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
 <meta name="theme-color" content="#ffffff">
 <title>Coach de langue</title>
-<script>document.documentElement.dataset.theme = localStorage.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");</script>
+<script>document.documentElement.dataset.theme = localStorage.theme || "light";</script>
 <link rel="manifest" href="/static/manifest.json">
 <link rel="icon" href="/static/icon-192.png">
 <link rel="apple-touch-icon" href="/static/icon-192.png">
@@ -22,6 +22,10 @@
 </header>
 <div id="panes">
   <section id="main-pane">
+    <div id="setup" hidden role="status">
+      <p id="setup-text"></p>
+      <a id="setup-link" href="/oauth/login">Connecter Google</a>
+    </div>
     <main id="log" aria-label="Conversation"></main>
     <div id="rec" hidden role="status"></div>
     <div id="take" hidden></div>
@@ -108,6 +112,8 @@
     </select>
     <label for="set-model">Modèle</label>
     <select id="set-model"></select>
+    <p id="set-model-state" class="hint"></p>
+    <a id="set-oauth" href="/oauth/login">Connecter Google</a>
     <label for="set-mic">Micro</label>
     <select id="set-mic"><option value="">Automatique</option></select>
     <small>Auto : micro intégré sur téléphone, casque branché sur PC.</small>

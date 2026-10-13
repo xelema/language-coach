@@ -170,6 +170,12 @@ a.icon { display: grid; place-items: center; text-decoration: none; color: inher
 #dash p { margin: .4rem 0; }
 #dash .muted, #dash small { color: var(--muted); }
 .hint { color: var(--muted); font-size: .85rem; margin: .3rem 0 0; }
+/* Bandeau d'installation (accès au modèle manquant) et lien d'action. */
+#setup { margin: .6rem .75rem 0; padding: .7rem .9rem; border-radius: .8rem;
+         background: var(--paused); color: var(--on-paused); font-size: .92rem; }
+#setup p { margin: 0 0 .55rem; }
+#setup a, #prefsdlg a { display: inline-block; padding: .45rem .8rem; border-radius: .5rem;
+  background: var(--accent); color: var(--on-accent); text-decoration: none; font-weight: 600; }
 #dash .muted { font-size: .85rem; }
 #dash a { color: var(--on-accent-soft); }
 .eyebrow { letter-spacing: .12em; text-transform: uppercase; font-size: .72rem; color: var(--faint); }
