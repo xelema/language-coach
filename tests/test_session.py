@@ -19,7 +19,7 @@ from app.main import app  # noqa: E402
 
 
 def initial():
-    return {"version": 1, "language": "ko", "calibration": [], "profile": {"objective": "Test", "level": "A1"}, "start": "2026-09-20", "target": "2026-12-07",
+    return {"version": 1, "language": "ko", "calibration": [], "resources": [], "profile": {"objective": "Test", "level": "A1"}, "start": "2026-09-20", "target": "2026-12-07",
             "next": "Dire une action d'hier", "resume": None, "sessions": [],
             "cards": [], "reviews": [], "recordings": [], "checkpoints": [],
             "review_engine": "anki"}

@@ -13,8 +13,8 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Stre
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from . import (anki, auth, coach, db, gemini, languages, notebook, opencode, settings,
-               timer, tts)
+from . import (anki, auth, coach, db, gemini, languages, notebook, opencode, resources,
+               settings, timer, tts)
 
 STATIC = Path(__file__).parent / "static"
 # The manifest is fetched without cookies, so it and its icons must be public.
@@ -253,22 +253,58 @@ def get_languages():
 @app.get("/api/profile")
 def get_profile():
     state = notebook.load()
+    code = (state or {}).get("language")
     return {"onboarded": state is not None,
-            "language": (state or {}).get("language"),
+            "language": code,
+            # L'interface s'en sert pour repérer le texte audible : la langue du
+            # carnet décide, le paquet fournit le motif d'écriture.
+            "script": languages.get(code).script if code else None,
             "profile": (state or {}).get("profile"),
             "deadline": (state or {}).get("target"),
             "languages": languages.catalog()}
 
 
+@app.get("/onboarding")
+def onboarding_page():
+    return FileResponse(STATIC / "onboarding.html")
+
+
+@app.post("/api/resource-search")
+def resource_search(body: dict):
+    """Vidéos candidates : une vraie recherche, sans clé API. Les candidats
+    existent réellement (titre, chaîne, durée) ; l'apprenant décide lesquels
+    entrent dans son carnet."""
+    code = str(body.get("language") or "").strip() or ((notebook.load() or {}).get("language") or "")
+    if not code:
+        return JSONResponse({"detail": "langue requise"}, status_code=400)
+    try:
+        language = languages.get(code)
+    except ValueError as e:
+        return JSONResponse({"detail": str(e)}, status_code=400)
+    level = str(body.get("level") or "").strip()
+    try:
+        return {"language": code, "level": level, "candidates": resources.search(language, level)}
+    except resources.Unavailable as e:
+        return JSONResponse({"detail": str(e)}, status_code=503)
+
+
+def _selected_resources(body: dict) -> list[dict]:
+    """Les vidéos cochées à l'initialisation, datées à l'enregistrement."""
+    when = str(body.get("start") or coach.today())
+    return [resources.entry(c, when) for c in (body.get("resources") or []) if isinstance(c, dict)]
+
+
 @app.post("/api/onboarding")
 def onboarding(body: dict):
-    """Crée le carnet : langue, objectif, niveau, cadence, contexte — une seule
-    fois, ensuite `/api/profile` suffit."""
+    """Crée le carnet : langue, objectif, niveau, cadence, contexte, vidéos
+    validées — une seule fois, ensuite `/api/profile` suffit."""
     if notebook.load() is not None:
         return JSONResponse({"detail": "un carnet existe déjà : voir /api/profile"}, status_code=409)
     try:
         state = notebook.new_notebook(str(body.get("language") or ""),
-                                      body.get("profile") or {}, start=body.get("start"))
+                                      body.get("profile") or {}, start=body.get("start"),
+                                      resources=_selected_resources(body),
+                                      target=str(body["deadline"]).strip() if body.get("deadline") else None)
         with db.write() as conn:
             notebook.insert_version(conn, state)
     except (ValueError, KeyError, TypeError) as e:

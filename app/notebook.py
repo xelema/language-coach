@@ -23,7 +23,8 @@ FELT = ("trop_facile", "bien", "trop_dur")
 
 # Le profil créé à l'initialisation : ce qui rend le coaching pertinent sans
 # rien supposer de l'apprenant.
-PROFILE_KEYS = ("name", "objective", "level", "level_verified", "cadence", "registers", "context")
+PROFILE_KEYS = ("name", "objective", "level", "level_verified", "cadence", "registers", "context",
+                "audio")
 
 
 
@@ -51,23 +52,30 @@ def validate_profile(profile, language) -> None:
     for register in registers:
         require(register in language.register_ids,
                 f"Registre inconnu pour le {language.name} : {register}.")
+    audio = profile.get("audio")
+    require(audio is None or (isinstance(audio, dict) and set(audio) == {"ecoute", "parle"}
+                              and all(type(value) is bool for value in audio.values())),
+            "Capacités audio attendues : {ecoute, parle} en booléens.")
 
 
-def new_notebook(language_code: str, profile: dict, start: str | None = None) -> dict:
-    """Carnet initial créé par l'initialisation, sans échéance imposée."""
+def new_notebook(language_code: str, profile: dict, start: str | None = None,
+                 resources: list | None = None, target: str | None = None) -> dict:
+    """Carnet initial créé par l'initialisation, sans échéance imposée.
+    `resources` = les vidéos que l'apprenant a validées lui-même ; `target` =
+    l'échéance, seulement si l'apprenant en a donné une."""
     language = languages.get(language_code)
     filled = {"name": "", "objective": "", "level": "A0", "level_verified": None,
               "cadence": "", "registers": list(language.register_ids), "context": "",
-              **(profile or {})}
+              "audio": None, **(profile or {})}
     validate_profile(filled, language)
     state = {
         "version": 1, "language": language.code, "profile": filled,
         "review_engine": "local", "start": day(start or date.today().isoformat()).isoformat(),
-        "target": None,
+        "target": day(target).isoformat() if target else None,
         "next": "Première séance : diagnostic court pour situer le niveau réel, puis objectif de séance.",
         "resume": None, "prep": None,
         "sessions": [], "cards": [], "reviews": [], "recordings": [], "checkpoints": [],
-        "calibration": [],
+        "calibration": [], "resources": list(resources or []),
     }
     validate(state)
     return state
@@ -133,7 +141,8 @@ def validate(state):
     text_field(state["next"], "next")
     require(state["resume"] is None or isinstance(state["resume"], str), "resume doit être un texte ou null.")
     require(state.get("prep") is None or isinstance(state["prep"], str), "prep doit être un texte ou null.")
-    for collection in ("sessions", "cards", "reviews", "recordings", "checkpoints", "calibration"):
+    for collection in ("sessions", "cards", "reviews", "recordings", "checkpoints", "calibration",
+                       "resources"):
         items = state[collection]
         require(isinstance(items, list), f"{collection} doit être une liste.")
         seen = set()
@@ -204,6 +213,15 @@ def validate(state):
             text_field(c.get(field), field)
         _optional_text(c.get("carry"), "carry", 2000)
         require(type(c.get("applied", False)) is bool, "applied doit être un booléen.")
+
+    for r in state["resources"]:
+        text_field(r.get("title"), "title")
+        text_field(r.get("url"), "url")
+        require(re.match(r"^https?://", r["url"]), "URL de ressource attendue (http/https).")
+        _optional_text(r.get("channel"), "channel", 200)
+        _optional_text(r.get("note"), "note", 500)
+        require(r.get("duration") is None or number(r["duration"], 0, 86400),
+                "Durée de vidéo invalide.")
 
 
 def validate_timers(data):
@@ -316,7 +334,7 @@ def apply_update(patch, conn=None):
     rejected save can roll back companion writes (ex. the timer stop)."""
     require(isinstance(patch, dict), "La mise à jour doit être un objet JSON.")
     require(set(patch) <= {"session", "cards", "reviews", "checkpoint", "next", "resume", "prep",
-                           "recordings", "calibration", "profile", "target"},
+                           "recordings", "calibration", "profile", "target", "resources"},
             "Champ de mise à jour inconnu.")
     if conn is None:
         with db.write() as conn:
@@ -367,6 +385,9 @@ def _apply(conn, patch):
     # Auto-critique de séance : une liste, comme les cartes et les révisions.
     for c in patch.get("calibration", []):
         state["calibration"].append(c)
+    # Vidéos validées plus tard : même règle, on n'écrase jamais les précédentes.
+    for r in patch.get("resources", []):
+        state["resources"].append(r)
     for key in ("next", "resume", "prep"):
         if key in patch:
             state[key] = patch[key]
@@ -435,6 +456,9 @@ def status(state, today):
             "jours_sans_trace": missed, "recap_7_derniers_jours": days[-7:],
             "meilleurs_paliers": best, "resume": state["resume"], "prochaine_action": state["next"],
             "calibrage": state["calibration"][-5:],
+            "ressources_videos": [{"titre": r["title"], "chaine": r.get("channel", ""),
+                                   "url": r["url"], "duree_s": r.get("duration"),
+                                   "note": r.get("note", "")} for r in state["resources"]],
             "review_engine": state.get("review_engine", "local"),
             "cartes_dues": [] if state.get("review_engine") == "anki" else sorted((c for c in state["cards"] if day(c["due"]) <= today), key=lambda c: c["due"])}
 

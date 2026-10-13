@@ -308,6 +308,12 @@ def prompt_values(state: dict) -> dict:
         "ime_windows": language.ime.get("windows", ""),
         "ime_android": language.ime.get("android", ""),
         "ime_note": language.ime.get("note", ""),
+        "ressources_videos": "\n".join(
+            f"- {r['title']}" + (f" — {r['channel']}" if r.get("channel") else "")
+            + (f" ({round(r['duration'] / 60)} min)" if r.get("duration") else "")
+            + f" : {r['url']}" + (f" ({r['note']})" if r.get("note") else "")
+            for r in (state or {}).get("resources", []))
+            or "- (aucune vidéo validée pour l'instant : s'appuyer sur le texte et la voix de synthèse)",
     }
 
 
@@ -461,9 +467,18 @@ def open_session_thread() -> dict | None:
     return None if session_closed(thread) else thread
 
 
+def declared_caps() -> dict | None:
+    """Capacités audio déclarées à l'initialisation, s'il y en a : évite de
+    reposer la question à chaque séance."""
+    audio = ((notebook.load() or {}).get("profile") or {}).get("audio")
+    return dict(audio) if isinstance(audio, dict) else None
+
+
 def start_session(caps: dict | None = None) -> tuple[dict, bool]:
     """Returns (thread, created). An unfinished session is reopened, not duplicated;
     declared audio channels are updated on it."""
+    if caps is None:
+        caps = declared_caps()
     existing = open_session_thread()
     if existing is not None:
         if caps is not None:

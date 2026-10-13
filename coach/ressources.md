@@ -19,6 +19,16 @@
 
 {{ressources}}
 
+## Vidéos validées par l'apprenant
+
+{{ressources_videos}}
+
+Ces vidéos ont été proposées par une recherche réelle et gardées par
+l'apprenant lui-même : elles existent. Tu peux t'appuyer dessus pour l'écoute,
+à condition de préparer la question et son corrigé avant de la poser, et de ne
+jamais inventer ce qui s'y dit. Sans transcription vérifiée, le travail sur une
+vidéo reste du repérage, sans score d'écoute validé.
+
 ## Clavier et saisie
 
 {{ime_windows}}

@@ -30,7 +30,7 @@ RECORDING = {"id": "r1", "date": "2026-09-10", "task": "conversation", "mode": "
 
 
 def state(**over):
-    s = {"version": 1, "language": "ko", "calibration": [], "profile": {"objective": "Test", "level": "A1"}, "start": "2026-09-07", "target": "2026-12-07", "next": "Diagnostic",
+    s = {"version": 1, "language": "ko", "calibration": [], "resources": [], "profile": {"objective": "Test", "level": "A1"}, "start": "2026-09-07", "target": "2026-12-07", "next": "Diagnostic",
          "resume": None, "sessions": [], "cards": [], "reviews": [], "recordings": [],
          "checkpoints": [], "review_engine": "anki"}
     s.update(over)

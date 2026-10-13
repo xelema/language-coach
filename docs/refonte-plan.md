@@ -118,3 +118,36 @@ avec une amie banmal/poli », les catégories de prises (`presentation`,
    movie-together, `docs/research`, sources coréennes), l'écoute par TTS
    Cartesia au lieu d'extraits vérifiés à la main, le barème/LP conservé,
    dépôt privé `xelema/language-coach`.
+
+## 6. Décisions prises (Florian)
+
+1. Auto-hébergé : une instance = un apprenant, ses clés, son dossier de données.
+2. Langues curatées au départ (japonais, coréen) mais **ajouter une langue = un
+   fichier** `app/languages/<code>.py`, découvert automatiquement.
+3. Niveau déclaré à l'initialisation **puis** vérifié par un diagnostic court.
+4. Aucune échéance imposée ; le coach peut en proposer une, et l'apprenant peut
+   en ajouter une plus tard (option réversible).
+5. Auto-critique : ressenti déclaré + auto-critique écrite stockés dans le
+   carnet, réinjectés dans la séance suivante avec des règles d'ajustement
+   bornées (un réglage, un cran). Les consignes durables du coach passent par
+   `calibration` — il ne réécrit pas ses fichiers de prompt.
+6. Vidéos : recherche réelle à l'initialisation (`yt-dlp`, sans clé), candidats
+   montrés avec leurs métadonnées, validés un par un par l'apprenant, puis
+   utilisés par le coach ; ni extrait ni corrigé inventés.
+
+## 7. État d'avancement
+
+- **Étape 3 — portage du moteur : fait.** `app/` repris, `KC_*` → `LC_*`,
+  langues paramétrables (`app/languages/`), carnet sans échéance, profil,
+  calibrage, ressources validées, prompts en gabarits (`app/prompts.py` +
+  `coach/*.md`), plus aucune trace nominative. 69 tests Python + 30 tests node
+  au vert ; application démarrée et parcourue à la main.
+- **Étape 4 — mise en route : fait.** `app/static/onboarding.html` +
+  `/api/onboarding`, `/api/profile`, `/api/resource-search`, `/api/voices` ;
+  l'interface passe par la mise en route tant qu'aucun carnet n'existe, et le
+  repérage du texte audible est fourni par le paquet de langue (plus de hangeul
+  codé en dur dans l'interface).
+- **Reste à faire** : ressenti de fin de séance dans le fil et affichage du
+  calibrage ; page progression adaptée (échéance optionnelle, ressources) ;
+  réglages du site (voix par langue, fuseau) exposés dans l'interface ;
+  dépôt GitHub privé + `QUICKSTART.md`.

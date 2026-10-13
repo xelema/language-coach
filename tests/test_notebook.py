@@ -26,7 +26,7 @@ def seed(state, timers=()):
 
 
 def initial(**overrides):
-    state = {"version": 1, "language": "ko", "calibration": [], "profile": {"objective": "Test", "level": "A1"}, "start": "2026-09-07", "target": "2026-12-07",
+    state = {"version": 1, "language": "ko", "calibration": [], "resources": [], "profile": {"objective": "Test", "level": "A1"}, "start": "2026-09-07", "target": "2026-12-07",
              "next": "Diagnostic", "resume": None, "sessions": [], "cards": [],
              "reviews": [], "recordings": [], "checkpoints": []}
     state.update(overrides)

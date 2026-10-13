@@ -28,7 +28,9 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
 body { font: 16px/1.5 system-ui, "Segoe UI", Roboto, sans-serif; word-break: keep-all; display: flex; flex-direction: column; height: 100dvh; background: var(--bg); color: var(--text); }
-[lang="ko"] { font-family: "Noto Sans KR", "Noto Sans CJK KR", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; font-size: 1.2em; }
+/* Toute langue cible (et pas seulement le coréen) : le repérage d'écriture
+   est fourni par le paquet de langue, la mise en forme est ici. */
+[lang]:not([lang="fr"]) { font-family: "Noto Sans KR", "Noto Sans JP", "Noto Sans CJK KR", "Noto Sans CJK JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; font-size: 1.2em; }
 button, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
@@ -87,13 +89,13 @@ a.chip { text-decoration: none; }
 #take button:first-child, #stake button:first-child { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 
 /* Korean runs open the listening popover. */
-#log [lang="ko"], #slog [lang="ko"], #rec [lang="ko"] { cursor: pointer; border-radius: .25rem; -webkit-tap-highlight-color: transparent; transition: background .12s; }
+#log [lang]:not([lang="fr"]), #slog [lang]:not([lang="fr"]), #rec [lang]:not([lang="fr"]) { cursor: pointer; border-radius: .25rem; -webkit-tap-highlight-color: transparent; transition: background .12s; }
 @media (hover: hover) {
-  #log [lang="ko"]:hover, #slog [lang="ko"]:hover, #rec [lang="ko"]:hover { background: var(--accent-soft); }
-  .me [lang="ko"]:hover { background: rgba(255, 255, 255, .22); }
+  #log [lang]:not([lang="fr"]):hover, #slog [lang]:not([lang="fr"]):hover, #rec [lang]:not([lang="fr"]):hover { background: var(--accent-soft); }
+  .me [lang]:not([lang="fr"]):hover { background: rgba(255, 255, 255, .22); }
 }
-[lang="ko"].say-on { background: var(--accent-soft); box-shadow: 0 0 0 2px var(--accent-soft); }
-.me [lang="ko"].say-on { background: rgba(255, 255, 255, .22); box-shadow: 0 0 0 2px rgba(255, 255, 255, .22); }
+[lang]:not([lang="fr"]).say-on { background: var(--accent-soft); box-shadow: 0 0 0 2px var(--accent-soft); }
+.me [lang]:not([lang="fr"]).say-on { background: rgba(255, 255, 255, .22); box-shadow: 0 0 0 2px rgba(255, 255, 255, .22); }
 #say { position: fixed; inset: auto; margin: 0; padding: .35rem; border: 1px solid var(--border); border-radius: .9rem; background: var(--surface); color: var(--text); box-shadow: 0 6px 24px var(--shadow); }
 #say:popover-open { display: flex; flex-wrap: wrap; gap: .35rem; max-width: 16rem; }
 #say button { flex: 1; min-height: 44px; padding: 0 1rem; border: 0; border-radius: .6rem; background: var(--soft); white-space: nowrap; }

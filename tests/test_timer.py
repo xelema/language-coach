@@ -79,7 +79,7 @@ class TimerTest(unittest.TestCase):
         self.assertEqual(kinds(timer.get("s1"))[-1], ("learner", "question"))
 
     def test_save_attaches_timing_and_confirmation(self):
-        state = {"version": 1, "language": "ko", "calibration": [], "profile": {"objective": "Test", "level": "A1"}, "start": "2026-09-20", "target": "2026-12-07", "next": "x",
+        state = {"version": 1, "language": "ko", "calibration": [], "resources": [], "profile": {"objective": "Test", "level": "A1"}, "start": "2026-09-20", "target": "2026-12-07", "next": "x",
                  "resume": None, "sessions": [], "cards": [], "reviews": [],
                  "recordings": [], "checkpoints": [], "review_engine": "anki"}
         with db.write() as conn:

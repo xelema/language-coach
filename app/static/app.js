@@ -34,7 +34,16 @@ let takePane = "main";    // which pane owns the pending take ("main" or "side")
 // ---- rendering ----
 
 const TASK_MARK = /\[tâche\s*:\s*[^\]]{0,80}\]?/g;  // also hides a mark still streaming in
-const HANGUL = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]+(?:[\s?!.,~-]+[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]+)*[?!.]?/g;
+// Le repérage d'écriture vient du paquet de langue (exposé par /api/profile) : aucune
+// écriture n'est codée en dur ici. Le repli couvre les écritures CJK et le hangul.
+const FALLBACK_SCRIPT = "[\\u1100-\\u11FF\\u3130-\\u318F\\uAC00-\\uD7AF\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FFF]";
+let TARGET_CODE = "ko";
+const scriptRegex = (source) => new RegExp(`${source}+(?:[\\s?!.,~-]+${source}+)*[?!.]?`, "g");
+let SCRIPT = scriptRegex(FALLBACK_SCRIPT);
+function setTarget(code, script) {
+  TARGET_CODE = code || TARGET_CODE;
+  SCRIPT = scriptRegex(script || FALLBACK_SCRIPT);
+}
 const escapeHtml = (s) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 // Raw HTML in model output is shown as text, then the result is sanitized anyway.
@@ -43,24 +52,26 @@ const markdown = (src) => DOMPurify.sanitize(marked.parse(src.replace(TASK_MARK,
 
 // Wrap target-language runs in lang="<code>" so the right font applies without the model marking them.
 // Each run is also a button that opens the listening popover.
-const koSpan = (text) => {
-  const s = Object.assign(document.createElement("span"), { lang: "ko", textContent: text, tabIndex: 0 });
+const targetSpan = (text) => {
+  const s = Object.assign(document.createElement("span"),
+    { lang: TARGET_CODE, textContent: text, tabIndex: 0 });
   s.setAttribute("role", "button");
+  s.dataset.sayable = "1";
   return s;
 };
-function tagKorean(root) {
+function tagTarget(root) {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const nodes = [];
   while (walker.nextNode()) {
     const n = walker.currentNode;
-    HANGUL.lastIndex = 0;
-    if (HANGUL.test(n.data) && !n.parentElement.closest("[lang=ko]")) nodes.push(n);
+    SCRIPT.lastIndex = 0;
+    if (SCRIPT.test(n.data) && !n.parentElement.closest("[data-sayable]")) nodes.push(n);
   }
   for (const n of nodes) {
     const frag = document.createDocumentFragment();
     let last = 0;
-    for (const m of n.data.matchAll(HANGUL)) {
-      frag.append(n.data.slice(last, m.index), koSpan(m[0]));
+    for (const m of n.data.matchAll(SCRIPT)) {
+      frag.append(n.data.slice(last, m.index), targetSpan(m[0]));
       last = m.index + m[0].length;
     }
     frag.append(n.data.slice(last));
@@ -74,7 +85,7 @@ const toBottom = (el) => { el.scrollTop = el.scrollHeight; };
 function add(cls, text = "", target = log) {
   const stick = nearBottom(target);
   const el = Object.assign(document.createElement("div"), { className: cls, textContent: text });
-  tagKorean(el);
+  tagTarget(el);
   target.appendChild(el);
   if (stick) toBottom(target);
   return el;
@@ -101,7 +112,7 @@ const toolChips = (label, target = log) => label.split(" / ").forEach((l) => {
 function coachBubble(text, target = log) {
   const el = add("b coach", "", target);
   el.innerHTML = markdown(text);
-  tagKorean(el);
+  tagTarget(el);
   return el;
 }
 
@@ -110,7 +121,7 @@ function audioBubble(path, text, target = log) {
   const audio = Object.assign(document.createElement("audio"), { controls: true, src: `/api/audio/${path}` });
   el.appendChild(audio);
   if (text) el.append(text);
-  tagKorean(el);
+  tagTarget(el);
   return el;
 }
 
@@ -181,7 +192,7 @@ function renderRec() {
   recEl.replaceChildren(
     Object.assign(document.createElement("b"), { textContent: `Le coach demande un enregistrement : ${req.task} (${req.mode}${max})` }),
     `${req.instructions} Appuie sur le micro pour répondre.`);
-  tagKorean(recEl);
+  tagTarget(recEl);
 }
 
 function setTimer(t) {
@@ -214,7 +225,7 @@ async function streamInto(threadId, target, body, after) {
     if (!out) return;
     const stick = nearBottom(target);
     out.innerHTML = markdown(raw);
-    tagKorean(out);
+    tagTarget(out);
     if (stick) toBottom(target);
   };
   const open = () => {
@@ -673,8 +684,8 @@ function openSay(span, x, focus) {
   if (focus) say.querySelector("button").focus();
 }
 
-function onKorean(e) {
-  const span = e.target.closest("[lang=ko][role=button]");
+function onTarget(e) {
+  const span = e.target.closest("[data-sayable]");
   if (!span) return;
   if (e.type === "keydown") {
     if (e.key !== "Enter" && e.key !== " ") return;
@@ -682,7 +693,7 @@ function onKorean(e) {
     openSay(span, null, true);
   } else if (getSelection().isCollapsed) openSay(span, e.clientX || null, false);  // not while selecting text
 }
-for (const el of [log, slog, recEl]) { el.addEventListener("click", onKorean); el.addEventListener("keydown", onKorean); }
+for (const el of [log, slog, recEl]) { el.addEventListener("click", onTarget); el.addEventListener("keydown", onTarget); }
 
 const sayState = (btn, state) => {
   if (sayBtn && sayBtn !== btn) sayBtn.removeAttribute("data-state");
@@ -877,10 +888,20 @@ $("import").onsubmit = async (e) => {
   }
 };
 
-// "/#seance" (from the progress page CTA) opens today's session once the list is loaded.
-loadThreads(null).then(() => {
+// La langue du carnet décide de ce qui est cliquable-pour-entendre, donc on la
+// lit avant d'afficher le fil. Sans carnet, direction la mise en route ; les
+// capacités audio déclarées là servent de valeurs par défaut sur cet appareil.
+// "/#seance" (venant de la page progression) ouvre la séance après le chargement.
+(async () => {
+  try {
+    const p = await (await fetch("/api/profile")).json();
+    if (!p.onboarded) { location.replace("/onboarding"); return; }
+    setTarget(p.language, p.script);
+    if (!localStorage.caps && p.profile && p.profile.audio) setCaps(p.profile.audio);
+  } catch {}
+  await loadThreads(null);
   if (location.hash === "#seance") {
     history.replaceState(null, "", "/");
     $("session").click();
   }
-});
+})();
