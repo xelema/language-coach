@@ -16,7 +16,7 @@ l'ordre exact, ce qui bloque si une pièce manque, et où sont les fichiers.
 ## 2. Installer et lancer
 
 ```bash
-git clone git@github.com:xelema/language-coach.git
+git clone https://github.com/xelema/language-coach.git
 cd language-coach
 ./run.sh
 ```
