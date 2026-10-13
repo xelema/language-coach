@@ -44,6 +44,14 @@ class AuthGuardTest(unittest.TestCase):
     def test_wrong_password_rejected(self):
         self.assertEqual(TestClient(app).post("/login", json={"password": "nope"}).status_code, 401)
 
+    def test_login_says_when_no_password_is_configured(self):
+        """Sans hash côté serveur, un 401 ferait croire à une faute de frappe."""
+        saved = os.environ.pop("LC_PASSWORD_HASH")
+        self.addCleanup(os.environ.__setitem__, "LC_PASSWORD_HASH", saved)
+        res = TestClient(app).post("/login", json={"password": "peu importe"})
+        self.assertEqual(res.status_code, 503)
+        self.assertIn("LC_PASSWORD_HASH", res.json()["detail"])
+
     def test_login_rate_limited(self):
         c = TestClient(app)
         for _ in range(auth.MAX_ATTEMPTS):

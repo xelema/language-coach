@@ -45,6 +45,15 @@ def check_password(password: str) -> bool:
         return False
 
 
+def configured() -> bool:
+    """True quand un hash de mot de passe est disponible (environnement ou .env).
+
+    Sans lui, la page de connexion refuse tout le monde : mieux vaut le dire
+    explicitement que répondre « mot de passe incorrect » à l'infini.
+    """
+    return bool((os.environ.get("LC_PASSWORD_HASH") or "").strip())
+
+
 def _secret() -> bytes:
     env = os.environ.get("LC_SESSION_SECRET")
     if env:
@@ -91,3 +100,6 @@ def record_attempt(ip: str, ok: bool) -> None:
 if __name__ == "__main__":
     pw = sys.argv[1] if len(sys.argv) > 1 else getpass.getpass("Password: ")
     print(f"LC_PASSWORD_HASH={make_hash(pw)}")
+    print("\nÀ coller dans le fichier .env à côté de run.sh : la ligne "
+          "LC_PASSWORD_HASH=... sans le # initial. « ./run.sh hash » fait la même chose.",
+          file=sys.stderr)
