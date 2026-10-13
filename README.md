@@ -112,4 +112,3 @@ ni les gabarits de `coach/` ne sont à modifier.
 - `app/gemini.py` / `app/opencode.py` — les fournisseurs de modèle.
 - `app/anki.py` — export `.apkg` des cartes.
 
-Détail de la reprise du projet d'origine : `docs/refonte-plan.md`.

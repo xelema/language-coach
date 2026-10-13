@@ -31,7 +31,7 @@ class TimerTest(unittest.TestCase):
         s = timer.coach_stream_end("s1", "dire un goût", now=at(1))
         self.assertEqual(kinds(s), [("coach", ""), ("learner", "dire un goût")])
 
-        # l'apprenant answers after 40 s: coach period opens, no long-window flag.
+        # The learner answers after 40 s: coach period opens, no long-window flag.
         r = timer.user_message("s1", now=at(1, 40))
         self.assertEqual(r["returned_after_s"], 0)
 

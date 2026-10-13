@@ -199,7 +199,7 @@ def turn(thread_id: int, body: dict):
         parent = db.get_thread(thread.get("parent_id") or 0)
         if parent and coach.session_closed(parent):
             return JSONResponse({"detail": "séance terminée"}, status_code=409)
-    # Finish on a session l'apprenant never engaged with deletes every trace
+    # Finish on a session the learner never engaged with deletes every trace
     # instead of asking the coach for a recap.
     if (body.get("event") == "finish" and thread.get("kind") == "session"
             and not db.has_user_input(thread_id)):

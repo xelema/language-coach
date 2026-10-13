@@ -37,7 +37,7 @@ MAX_AUDIO_BYTES = 8 * 1024 * 1024
 MAX_AUDIO_SECONDS = 300
 MAX_IMPORT_BYTES = 200 * 1024 * 1024
 
-# Magic-byte checks per extension, ported from the original project/coach.py import_audio.
+# Magic-byte checks per extension, on the audio files this app accepts.
 AUDIO_MAGIC = {
     ".wav": lambda h: h[:4] == b"RIFF" and h[8:12] == b"WAVE",
     ".mp3": lambda h: h[:3] == b"ID3" or (len(h) > 1 and h[0] == 255 and h[1] & 224 == 224),

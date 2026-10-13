@@ -92,7 +92,7 @@ class SessionFlowTest(unittest.TestCase):
         self.assertEqual(s["periods"][-1]["task"], "un goût")
         self.assertIn("Statut du carnet", text_turn.systems[-1])
 
-        # l'apprenant answers: coach period opens, meta line rides on the wire only.
+        # The learner answers: coach period opens, meta line rides on the wire only.
         with patch("app.main.gemini.has_token", return_value=True), patch(
             "app.coach.gemini.generate_turn", side_effect=text_turn("Bien. Et en poli ?")
         ):
@@ -200,7 +200,7 @@ class SessionFlowTest(unittest.TestCase):
         self.assertTrue(any(e["type"] == "tool" and "pas pouvoir parler" in e["label"] for e in evs))
         self.assertIsNone(db.pending_request(tid))
 
-        # l'apprenant can finally speak: the coach flips the channel for the next turns.
+        # The learner can finally speak: the coach flips the channel for the next turns.
         turns = iter([call_turn("set_channels", {"ecoute": True, "parle": True}),
                       text_turn("Allez, au micro.")])
         with patch("app.main.gemini.has_token", return_value=True), patch(

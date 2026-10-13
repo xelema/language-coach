@@ -330,7 +330,7 @@ const numberedTail = (text) => {
   return nums.length >= 2 && nums.every((v, i) => v === i + 1) ? nums.length : 0;
 };
 
-// The skeleton currently in the box and still untouched by l'apprenant.
+// The skeleton currently in the box and still untouched by the learner.
 let prefilled = "";
 
 function prefillNumbered(text) {
