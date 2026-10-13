@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+<title>Mise en route — coach de langue</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: light-dark(#f3f4f6, #15171c); --surface: light-dark(#fff, #1f2229);
+    --border: light-dark(#e5e7eb, #2e323b); --field: light-dark(#d1d5db, #3a3f49);
+    --text: light-dark(#111827, #e6e1d8); --muted: light-dark(#4b5563, #b3ada2);
+    --accent: light-dark(#4f46e5, #5a55d9); --on-accent: light-dark(#fff, #f4f2ee);
+    --soft: light-dark(#f3f4f6, #2a2e36);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 1.5rem 1rem 4rem; font: 16px/1.5 system-ui, "Segoe UI", Roboto, sans-serif;
+         background: var(--bg); color: var(--text); }
+  main { max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 1.35rem; margin: 0 0 .25rem; }
+  h2 { font-size: 1rem; margin: 0 0 .5rem; }
+  .hint { color: var(--muted); font-size: .875rem; margin: .35rem 0 0; }
+  fieldset { border: 1px solid var(--border); border-radius: .75rem; background: var(--surface);
+             padding: .9rem 1rem; margin: 0 0 1rem; }
+  legend { font-weight: 600; font-size: .95rem; padding: 0 .35rem; }
+  label.opt { display: flex; gap: .55rem; align-items: flex-start; padding: .45rem .25rem;
+              border-radius: .5rem; }
+  label.opt:hover { background: var(--soft); }
+  label.opt small { display: block; color: var(--muted); }
+  label.check { display: flex; gap: .5rem; align-items: center; padding: .3rem 0; }
+  input[type="text"], input[type="date"], select, textarea {
+    width: 100%; padding: .55rem .6rem; font: inherit; color: inherit;
+    background: var(--surface); border: 1px solid var(--field); border-radius: .5rem; margin-top: .3rem;
+  }
+  button { font: inherit; color: inherit; cursor: pointer; padding: .55rem .9rem;
+           border-radius: .5rem; border: 1px solid var(--field); background: var(--soft); }
+  button.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent);
+                   width: 100%; padding: .8rem; font-size: 1.05rem; margin-top: .25rem; }
+  ul#candidats { list-style: none; margin: .75rem 0 0; padding: 0; }
+  ul#candidats li { border-top: 1px solid var(--border); padding: .55rem .25rem; }
+  ul#candidats a { color: var(--accent); text-decoration: none; }
+  .meta { color: var(--muted); font-size: .82rem; }
+  #err { color: light-dark(#b91c1c, #f28b82); min-height: 1.2em; margin: .6rem 0 0; }
+</style>
+<main>
+  <h1>Mise en route</h1>
+  <p class="hint">Ces réponses configurent le coach : il en tire les situations, le vocabulaire et la
+    difficulté des exercices. Tout reste modifiable ensuite depuis les réglages.</p>
+
+  <form id="f">
+    <fieldset>
+      <legend>Langue à apprendre</legend>
+      <div id="langues"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Pourquoi tu l'apprends</legend>
+      <input id="objectif" type="text" required autocomplete="off"
+             placeholder="parler avec une amie, lire des mangas, voyager, travailler…">
+      <p class="hint">Le coach travaillera les situations qui correspondent à cet objectif — sois précis,
+        c'est ce qui rend les exercices utiles.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Niveau déjà connu</legend>
+      <select id="niveau"></select>
+      <p class="hint" id="niveau-detail"></p>
+      <p class="hint">Un diagnostic court lors de la première séance vérifiera ce niveau et l'ajustera.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Comment t'appeler (facultatif)</legend>
+      <input id="nom" type="text" maxlength="60" autocomplete="given-name" placeholder="prénom ou surnom">
+    </fieldset>
+
+    <fieldset>
+      <legend>Rythme et échéance (facultatif)</legend>
+      <input id="cadence" type="text" autocomplete="off" placeholder="3 séances par semaine, plutôt le soir…">
+      <label class="check" for="echeance">Date limite, si tu en as une</label>
+      <input id="echeance" type="date">
+      <p class="hint">Aucune échéance n'est imposée : laisse vide pour avancer à ton rythme. Un objectif
+        daté peut aussi être ajouté plus tard.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Ce qui t'intéresse (facultatif)</legend>
+      <textarea id="contexte" rows="3" autocomplete="off"
+                placeholder="ce que tu aimes, ton quotidien, ce qui te bloque, ce que le coach doit savoir…"></textarea>
+    </fieldset>
+
+    <fieldset>
+      <legend>Pendant les séances</legend>
+      <label class="check"><input type="checkbox" id="ecoute" checked> Je peux écouter du son</label>
+      <label class="check"><input type="checkbox" id="parle" checked> Je peux envoyer des vocaux</label>
+      <p class="hint">Sans écoute, les exercices d'écoute sont remplacés ; sans parole, les prises sont
+        reportées. Les deux se changent en cours de séance.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Vidéos pour l'écoute (facultatif)</legend>
+      <p class="hint">Une vraie recherche dans la langue choisie : les vidéos proposées existent, avec
+        leur chaîne et leur durée. Coche seulement celles qui te paraissent adaptées — le coach s'appuiera
+        dessus pour l'écoute.</p>
+      <button type="button" id="chercher">Chercher des vidéos</button>
+      <p class="hint" id="rech-msg"></p>
+      <ul id="candidats"></ul>
+    </fieldset>
+
+    <button class="primary" id="valider" type="submit">Commencer</button>
+    <p id="err" role="alert"></p>
+  </form>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const catalog = { languages: [] };
+let selectedLanguage = null;
+
+const seconds = (n) => (!n ? "" : n < 90 ? `${n} s` : `${Math.round(n / 60)} min`);
+
+function fieldsetOptions(language) {
+  const wrap = document.createElement("label");
+  wrap.className = "opt";
+  const input = Object.assign(document.createElement("input"),
+    { type: "radio", name: "langue", value: language.code });
+  const text = document.createElement("span");
+  text.append(Object.assign(document.createElement("strong"), { textContent: language.name }));
+  text.append(Object.assign(document.createElement("small"), { textContent: language.native_name }));
+  input.onchange = () => selectLanguage(language.code);
+  wrap.append(input, text);
+  return wrap;
+}
+
+function selectLanguage(code) {
+  selectedLanguage = catalog.languages.find((l) => l.code === code) || null;
+  const select = $("niveau");
+  select.textContent = "";
+  for (const level of (selectedLanguage?.levels || [])) {
+    select.append(Object.assign(document.createElement("option"),
+      { value: level.code, textContent: `${level.code} — ${level.label}` }));
+  }
+  detail();
+  $("candidats").textContent = "";
+  $("rech-msg").textContent = "";
+}
+
+function detail() {
+  const level = selectedLanguage?.levels.find((l) => l.code === $("niveau").value);
+  $("niveau-detail").textContent = level ? `Ce qu'on sait faire à ce niveau : ${level.can}.` : "";
+}
+
+async function searchVideos() {
+  const msg = $("rech-msg"), list = $("candidats");
+  if (!selectedLanguage) return;
+  msg.textContent = "Recherche en cours…";
+  list.textContent = "";
+  const res = await fetch("/api/resource-search", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ language: selectedLanguage.code, level: $("niveau").value }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {   // Recherche indisponible : on continue sans vidéos, ce n'est pas bloquant.
+    msg.textContent = data.detail || "Recherche indisponible pour l'instant.";
+    return;
+  }
+  msg.textContent = "Coche ce qui te convient :";
+  for (const c of data.candidates) {
+    const li = document.createElement("li");
+    const label = document.createElement("label");
+    label.className = "check";
+    const box = Object.assign(document.createElement("input"), { type: "checkbox" });
+    box.dataset.candidate = JSON.stringify(c);
+    const text = document.createElement("span");
+    text.append(Object.assign(document.createElement("strong"), { textContent: c.title }));
+    text.append(Object.assign(document.createElement("div"), { className: "meta",
+      textContent: [c.channel, seconds(c.duration)].filter(Boolean).join(" · ") }));
+    const link = Object.assign(document.createElement("a"),
+      { href: c.url, target: "_blank", rel: "noopener", textContent: "ouvrir" });
+    label.append(box, text);
+    li.append(label, link);
+    list.append(li);
+  }
+  if (!data.candidates.length) msg.textContent = "Aucun résultat exploitable.";
+}
+
+function selectedResources() {
+  return [...$("candidats").querySelectorAll("input[type=checkbox]:checked")]
+    .map((box) => JSON.parse(box.dataset.candidate));
+}
+
+$("niveau").onchange = detail;
+$("chercher").onclick = searchVideos;
+
+$("f").onsubmit = async (e) => {
+  e.preventDefault();
+  const err = $("err");
+  err.textContent = "";
+  if (!selectedLanguage) { err.textContent = "Choisis une langue."; return; }
+  const body = {
+    language: selectedLanguage.code,
+    profile: {
+      name: $("nom").value.trim(),
+      objective: $("objectif").value.trim(),
+      level: $("niveau").value,
+      cadence: $("cadence").value.trim(),
+      context: $("contexte").value.trim(),
+      audio: { ecoute: $("ecoute").checked, parle: $("parle").checked },
+    },
+    deadline: $("echeance").value || null,
+    resources: selectedResources(),
+  };
+  const res = await fetch("/api/onboarding", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+  });
+  if (res.ok) { location.href = "/"; return; }
+  const data = await res.json().catch(() => ({}));
+  err.textContent = data.detail || `Erreur ${res.status}`;
+};
+
+// La date limite choisie à la mise en route part avec le profil (facultative).
+(async () => {
+  const data = await (await fetch("/api/languages")).json();
+  catalog.languages = data.languages || [];
+  const wrap = $("langues");
+  for (const language of catalog.languages) wrap.append(fieldsetOptions(language));
+  if (catalog.languages.length) {
+    wrap.querySelector("input").checked = true;
+    selectLanguage(catalog.languages[0].code);
+  }
+})();
+</script>

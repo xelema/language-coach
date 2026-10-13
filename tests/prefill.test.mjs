@@ -45,7 +45,7 @@ const code = `
   const chip = () => __el();
   const toolChips = () => {};
   const markdown = (s) => s;
-  const tagKorean = () => {};
+  const tagTarget = () => {};
   const nearBottom = () => true;
   const toBottom = () => {};
   const syncButtons = () => {};

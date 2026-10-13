@@ -1,21 +1,29 @@
 const $ = (id) => document.getElementById(id);
 const dash = $("dash");
 
-// Same Hangul tagging as app.js: Korean runs get lang="ko" for the right font.
-const HANGUL = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]+(?:[\s?!.,~-]+[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]+)*[?!.]?/g;
-function tagKorean(root) {
+// Même repérage d'écriture que dans app.js : la langue du carnet (lue sur
+// /api/profile) donne le motif, la mise en forme vient de la feuille de style.
+const FALLBACK_SCRIPT = "[\\u1100-\\u11FF\\u3130-\\u318F\\uAC00-\\uD7AF\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FFF]";
+let TARGET_CODE = "ko";
+const scriptRegex = (source) => new RegExp(`${source}+(?:[\\s?!.,~-]+${source}+)*[?!.]?`, "g");
+let SCRIPT = scriptRegex(FALLBACK_SCRIPT);
+function setTarget(code, script) {
+  TARGET_CODE = code || TARGET_CODE;
+  SCRIPT = scriptRegex(script || FALLBACK_SCRIPT);
+}
+function tagTarget(root) {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const nodes = [];
   while (walker.nextNode()) {
     const n = walker.currentNode;
-    HANGUL.lastIndex = 0;
-    if (HANGUL.test(n.data) && !n.parentElement.closest("[lang=ko]")) nodes.push(n);
+    SCRIPT.lastIndex = 0;
+    if (SCRIPT.test(n.data) && !n.parentElement.closest("[lang]")) nodes.push(n);
   }
   for (const n of nodes) {
     const frag = document.createDocumentFragment();
     let last = 0;
-    for (const m of n.data.matchAll(HANGUL)) {
-      frag.append(n.data.slice(last, m.index), Object.assign(document.createElement("span"), { lang: "ko", textContent: m[0] }));
+    for (const m of n.data.matchAll(SCRIPT)) {
+      frag.append(n.data.slice(last, m.index), Object.assign(document.createElement("span"), { lang: TARGET_CODE, textContent: m[0] }));
       last = m.index + m[0].length;
     }
     frag.append(n.data.slice(last));
@@ -78,7 +86,7 @@ function hero() {
 function depart() {
   const s = card(el("h2", "", "Prochain départ"));
   const p = el("p", "", data.resume || data.next);
-  tagKorean(p);
+  tagTarget(p);
   const cta = Object.assign(document.createElement("a"),
     { className: "cta", href: "/#seance", textContent: "Lancer la séance" });
   const review = el("p", "muted");
@@ -162,7 +170,7 @@ function renderDetail() {
   const ul = el("ul");
   for (const r of rec.recaps) ul.append(el("li", "", r));
   box.replaceChildren(head, ul);
-  tagKorean(box);
+  tagTarget(box);
 }
 
 function minutesChart() {
@@ -222,7 +230,7 @@ function recapTable() {
     const th = el("th", "", d.date);
     th.scope = "row";
     const work = el("td", "", d.recaps.join(" · ") || "—");
-    tagKorean(work);
+    tagTarget(work);
     row.append(th, el("td", "", LABELS[d.status]), el("td", "", String(d.minutes)), work);
     tbody.append(row);
   }
@@ -242,7 +250,7 @@ function takeCard(r, caption) {
     { controls: true, preload: "none", src: `/api/audio/${r.path}` }));
   if (r.note) {
     const p = el("p", "", r.note);
-    tagKorean(p);
+    tagTarget(p);
     a.append(p);
   }
   return a;
@@ -348,7 +356,7 @@ function checkpointTable() {
     for (const k of Object.keys(SKILLS))
       if (c.evidence[k]) {
         const p = el("p", "", `${SKILLS[k]} : ${c.evidence[k]}`);
-        tagKorean(p);
+        tagTarget(p);
         det.append(p);
       }
     if (c.audit_note) det.append(el("p", "muted", c.audit_note));
@@ -411,7 +419,7 @@ function sessionList() {
       det.append(ul);
     }
     li.append(det);
-    tagKorean(li);
+    tagTarget(li);
     ol.append(li);
   }
   s.append(ol);
@@ -454,4 +462,11 @@ function applyTheme(theme) {
 themeBtn.onclick = () => applyTheme(localStorage.theme = root.dataset.theme === "dark" ? "light" : "dark");
 applyTheme(root.dataset.theme);
 
-load();
+// Le repérage d'écriture dépend de la langue du carnet.
+(async () => {
+  try {
+    const p = await (await fetch("/api/profile")).json();
+    setTarget(p.language, p.script);
+  } catch {}
+  load();
+})();

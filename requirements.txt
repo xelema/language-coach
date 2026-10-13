@@ -3,3 +3,6 @@ uvicorn==0.52.4
 httpx==0.28.1
 tzdata==2025.2
 genanki==0.13.1
+# Recherche de vidéos à l'initialisation (sans clé API). Absent ou bloqué par
+# YouTube, la recherche échoue proprement et le reste fonctionne.
+yt-dlp==2026.08.19
