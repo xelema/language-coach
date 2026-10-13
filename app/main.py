@@ -207,8 +207,11 @@ def turn(thread_id: int, body: dict):
         return StreamingResponse(iter([json.dumps({"type": "discarded"}) + "\n"]),
                                  media_type="application/x-ndjson; charset=utf-8")
     if not gemini.has_token():
-        return JSONResponse({"detail": "no model access: /oauth/login (gemini) or OPENCODE_API_KEY (opencode)"},
-                            status_code=503)
+        return JSONResponse(
+            {"detail": "Le coach n'a pas d'accès au modèle : connecte le compte Google avec le bouton "
+                       "« Connecter Google » (c'est l'abonnement qui fait tourner Gemini, aucune clé "
+                       "API), ou renseigne OPENCODE_API_KEY si le fournisseur OpenCode Go est choisi."},
+            status_code=503)
     event = body.get("event", "message")
     text = (body.get("text") or "").strip()
     audio = (body.get("audio") or "").strip()
@@ -276,6 +279,11 @@ def get_profile():
             "script": languages.get(code).script if code else None,
             "profile": (state or {}).get("profile"),
             "deadline": (state or {}).get("target"),
+            # Accès au modèle : l'interface prévient tant qu'il manque, plutôt
+            # que de laisser échouer la première séance.
+            "provider": settings.current_provider(),
+            "model_ready": gemini.has_token(),
+            "oauth_url": "/oauth/login",
             "languages": languages.catalog()}
 
 

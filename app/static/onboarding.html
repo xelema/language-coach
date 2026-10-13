@@ -5,7 +5,7 @@
 <title>Mise en route — coach de langue</title>
 <style>
   :root {
-    color-scheme: light dark;
+    color-scheme: light;
     --bg: light-dark(#f3f4f6, #15171c); --surface: light-dark(#fff, #1f2229);
     --border: light-dark(#e5e7eb, #2e323b); --field: light-dark(#d1d5db, #3a3f49);
     --text: light-dark(#111827, #e6e1d8); --muted: light-dark(#4b5563, #b3ada2);
@@ -35,6 +35,10 @@
            border-radius: .5rem; border: 1px solid var(--field); background: var(--soft); }
   button.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent);
                    width: 100%; padding: .8rem; font-size: 1.05rem; margin-top: .25rem; }
+  a.primary { display: block; text-align: center; background: var(--accent); color: var(--on-accent);
+              padding: .8rem; border-radius: .5rem; font-size: 1.05rem; font-weight: 600;
+              text-decoration: none; margin: .8rem 0 .4rem; }
+  #done h2 { margin-top: 1.2rem; }
   ul#candidats { list-style: none; margin: .75rem 0 0; padding: 0; }
   ul#candidats li { border-top: 1px solid var(--border); padding: .55rem .25rem; }
   ul#candidats a { color: var(--accent); text-decoration: none; }
@@ -44,7 +48,8 @@
 <main>
   <h1>Mise en route</h1>
   <p class="hint">Ces réponses configurent le coach : il en tire les situations, le vocabulaire et la
-    difficulté des exercices. Tout reste modifiable ensuite depuis les réglages.</p>
+    difficulté des exercices. Tout reste modifiable ensuite depuis les réglages. L'écoute et la
+    parole se déclarent au début de chaque séance, pas ici.</p>
 
   <form id="f">
     <fieldset>
@@ -88,14 +93,6 @@
     </fieldset>
 
     <fieldset>
-      <legend>Pendant les séances</legend>
-      <label class="check"><input type="checkbox" id="ecoute" checked> Je peux écouter du son</label>
-      <label class="check"><input type="checkbox" id="parle" checked> Je peux envoyer des vocaux</label>
-      <p class="hint">Sans écoute, les exercices d'écoute sont remplacés ; sans parole, les prises sont
-        reportées. Les deux se changent en cours de séance.</p>
-    </fieldset>
-
-    <fieldset>
       <legend>Vidéos pour l'écoute (facultatif)</legend>
       <p class="hint">Une vraie recherche dans la langue choisie : les vidéos proposées existent, avec
         leur chaîne et leur durée. Coche seulement celles qui te paraissent adaptées — le coach s'appuiera
@@ -108,6 +105,16 @@
     <button class="primary" id="valider" type="submit">Commencer</button>
     <p id="err" role="alert"></p>
   </form>
+
+  <section id="done" hidden>
+    <h2>Dernière étape : l'accès au modèle</h2>
+    <p class="hint">Sans lui, le coach ne peut pas répondre : aucune séance ne démarrera. La connexion
+      se fait avec ton compte Google et le jeton reste sur cet ordinateur.</p>
+    <p class="hint" id="done-alt"></p>
+    <a class="primary" id="go-google" href="/oauth/login">Connecter Google</a>
+    <p class="hint"><a href="/">Continuer sans connecter</a> — le coach s'ouvrira, mais tu pourras
+      connecter Google plus tard depuis les Paramètres.</p>
+  </section>
 </main>
 <script>
 const $ = (id) => document.getElementById(id);
@@ -202,7 +209,6 @@ $("f").onsubmit = async (e) => {
       level: $("niveau").value,
       cadence: $("cadence").value.trim(),
       context: $("contexte").value.trim(),
-      audio: { ecoute: $("ecoute").checked, parle: $("parle").checked },
     },
     deadline: $("echeance").value || null,
     resources: selectedResources(),
@@ -210,9 +216,23 @@ $("f").onsubmit = async (e) => {
   const res = await fetch("/api/onboarding", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
   });
-  if (res.ok) { location.href = "/"; return; }
-  const data = await res.json().catch(() => ({}));
-  err.textContent = data.detail || `Erreur ${res.status}`;
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    err.textContent = data.detail || `Erreur ${res.status}`;
+    return;
+  }
+  const data = await res.json();
+  // Le coach ne peut rien faire sans accès au modèle : on le demande ici, une
+  // fois, plutôt que de laisser la première séance échouer.
+  if (data.model_ready) { location.href = "/"; return; }
+  $("f").hidden = true;
+  $("done").hidden = false;
+  const google = (data.provider || "gemini") !== "opencode";
+  $("go-google").hidden = !google;
+  $("done-alt").textContent = google
+    ? "L'accès passe par l'abonnement Google : aucune clé API à acheter."
+    : "Le fournisseur OpenCode Go est sélectionné : renseigne OPENCODE_API_KEY dans le fichier .env, "
+      + "puis redémarre l'application.";
 };
 
 // La date limite choisie à la mise en route part avec le profil (facultative).

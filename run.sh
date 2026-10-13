@@ -53,5 +53,7 @@ if not (os.environ.get("LC_PASSWORD_HASH") or "").strip():
 PY
 
 PORT="${LC_PORT:-51121}"
-echo "coach sur http://127.0.0.1:${PORT}" >&2
+# « localhost » et pas 127.0.0.1 : le retour de Google est épinglé sur
+# localhost:51121, donc la session doit vivre sur ce nom d'hôte là.
+echo "coach sur http://localhost:${PORT}" >&2
 exec "$PY" -m uvicorn app.main:app --host 127.0.0.1 --port "$PORT"

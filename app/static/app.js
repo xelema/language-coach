@@ -249,7 +249,13 @@ async function streamInto(threadId, target, body, after) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    if (!res.ok) { evChip(`Erreur ${res.status} : ${await res.text()}`, true); return; }
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      evChip(data.detail || `Erreur ${res.status}`, true);
+      // Un 503 ici veut presque toujours dire : pas d'accès au modèle.
+      if (res.status === 503) showSetup(false);
+      return;
+    }
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buf = "";
@@ -869,6 +875,17 @@ let profileCache = null;
 async function fillProfile() {
   const p = await (await fetch("/api/profile")).json();
   profileCache = p.profile || null;
+  modelProvider = p.provider || modelProvider;
+  showSetup(p.model_ready, p.provider);
+  // Le même état, en clair, là où on va chercher le réglage.
+  const google = modelProvider !== "opencode";
+  $("set-model-state").textContent = p.model_ready
+    ? "Accès au modèle : connecté."
+    : google
+      ? "Accès au modèle : pas encore connecté — l'abonnement Google fait tourner Gemini, "
+        + "aucune clé API à acheter."
+      : "Accès au modèle : renseigner OPENCODE_API_KEY dans le fichier .env, puis redémarrer.";
+  $("set-oauth").hidden = p.model_ready || !google;
   const levels = (p.languages.find((l) => l.code === p.language) || {}).levels || [];
   $("set-niveau").replaceChildren(...levels.map((lv) =>
     Object.assign(document.createElement("option"),
@@ -974,6 +991,24 @@ $("import").onsubmit = async (e) => {
   }
 };
 
+// Le coach a besoin d'un accès au modèle : on le dit tant qu'il manque, plutôt
+// que de laisser la première séance échouer sur un 503.
+let modelProvider = "gemini";
+
+function showSetup(ready, provider) {
+  const box = $("setup"), link = $("setup-link");
+  if (!box) return;
+  const google = (provider || modelProvider) !== "opencode";
+  box.hidden = !!ready;
+  if (ready) return;
+  link.hidden = !google;
+  $("setup-text").textContent = google
+    ? "Le coach n'a pas encore accès au modèle : connecte le compte Google — c'est l'abonnement "
+      + "qui fait tourner Gemini, aucune clé API à acheter."
+    : "Le coach n'a pas encore accès au modèle : renseigne OPENCODE_API_KEY dans le fichier .env, "
+      + "puis redémarre l'application.";
+}
+
 // La langue du carnet décide de ce qui est cliquable-pour-entendre, donc on la
 // lit avant d'afficher le fil. Sans carnet, direction la mise en route ; les
 // capacités audio déclarées là servent de valeurs par défaut sur cet appareil.
@@ -983,6 +1018,8 @@ $("import").onsubmit = async (e) => {
     const p = await (await fetch("/api/profile")).json();
     if (!p.onboarded) { location.replace("/onboarding"); return; }
     setTarget(p.language, p.script);
+    modelProvider = p.provider || modelProvider;
+    showSetup(p.model_ready, p.provider);
     if (!localStorage.caps && p.profile && p.profile.audio) setCaps(p.profile.audio);
   } catch {}
   await loadThreads(null);
