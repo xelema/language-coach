@@ -68,19 +68,79 @@ const card = (...kids) => { const s = el("section", "card"); s.append(...kids); 
 
 function hero() {
   const sub = el("p", "eyebrow",
-    `Semaine ${data.semaine} sur 13 · ${fmtShort(data.start)} → ${fmtShort(data.target)}`);
+    `Semaine ${data.semaine} · depuis le ${fmtShort(data.start)}`
+    + (data.target ? ` → ${fmtShort(data.target)}` : " · aucune échéance fixée"));
   const stats = el("div", "stats");
   for (const [label, value] of [
     ["Rang personnel", data.rang],
     ["Paliers démontrés", `${data.lp} / 400`],
     ["Pratique enregistrée", `${data.minutes_pratiquees} min`],
-    ["Avant le bilan", `${data.jours_restants} j`],
+    data.target ? ["Avant l'échéance", `${data.jours_restants} j`] : ["Niveau", niveauLabel()],
   ]) {
     const s = el("div", "stat");
     s.append(el("span", "lbl", label), el("strong", "", value));
     stats.append(s);
   }
   return card(sub, stats);
+}
+
+// Le niveau affiché est celui du profil : vérifié par le diagnostic s'il l'a été,
+// sinon celui que l'apprenant a déclaré.
+function niveauLabel() {
+  const p = data.profile || {};
+  if (p.level_verified) return `${p.level_verified} vérifié`;
+  return p.level ? `${p.level} déclaré` : "—";
+}
+
+function profil() {
+  const p = data.profile || {};
+  if (!p.objective) return null;
+  const s = card(el("h2", "", "Profil d'apprentissage"));
+  s.append(el("p", "", `Objectif : ${p.objective}`));
+  s.append(el("p", "muted", `Niveau : ${niveauLabel()}`));
+  if (p.cadence) s.append(el("p", "muted", `Cadence souhaitée : ${p.cadence}`));
+  if (p.context) s.append(el("p", "muted", `Contexte donné au coach : ${p.context}`));
+  return s;
+}
+
+const FELT = { trop_facile: "trop facile", bien: "juste bien", trop_dur: "trop dur", non_dit: "non dit" };
+
+function calibrage() {
+  const entries = data.calibrage || [];
+  if (!entries.length) return null;
+  const s = card(el("h2", "", "Calibrage des séances"));
+  s.append(el("p", "muted",
+    "Ressenti déclaré à la clôture, lecture du coach et réglage retenu pour la séance suivante."));
+  const ol = el("ol", "hist");
+  for (const c of entries.slice(0, 12)) {
+    const li = el("li");
+    li.append(el("b", "", `${fmtShort(c.date)} · ${FELT[c.felt] || c.felt}`));
+    li.append(el("p", "", c.observation));
+    li.append(el("p", "muted", `Réglage retenu : ${c.change}`));
+    if (c.carry) li.append(el("p", "muted", `À surveiller : ${c.carry}`));
+    ol.append(li);
+  }
+  s.append(ol);
+  return s;
+}
+
+function videos() {
+  const list = data.ressources || [];
+  if (!list.length) return null;
+  const s = card(el("h2", "", "Vidéos validées pour l'écoute"));
+  s.append(el("p", "muted",
+    "Cherchées puis gardées par toi à la mise en route : le coach s'en sert pour l'écoute."));
+  const ul = el("ul", "hist");
+  for (const r of list) {
+    const li = el("li");
+    li.append(Object.assign(document.createElement("a"),
+      { href: r.url, target: "_blank", rel: "noopener", textContent: r.title }));
+    const meta = [r.channel, r.duration ? `${Math.round(r.duration / 60)} min` : ""].filter(Boolean).join(" · ");
+    if (meta) li.append(el("p", "muted", meta));
+    ul.append(li);
+  }
+  s.append(ul);
+  return s;
 }
 
 function depart() {
@@ -107,7 +167,9 @@ function depart() {
 
 function calendar() {
   const byDate = new Map(data.days.map((d) => [d.date, d]));
-  const start = parseDay(data.start), target = parseDay(data.target);
+  const start = parseDay(data.start);
+  // Sans échéance, la chronologie s'arrête à aujourd'hui.
+  const target = data.target ? parseDay(data.target) : parseDay(data.date);
   const monday = new Date(start);
   monday.setDate(start.getDate() - ((start.getDay() + 6) % 7));
   const cal = el("div", "cal");
@@ -429,12 +491,13 @@ function sessionList() {
 // ---- page ----
 
 function render() {
-  dash.replaceChildren(
-    hero(), depart(),
+  dash.replaceChildren(...[
+    hero(), profil(), depart(),
     card(el("h2", "", "Activité"), calendar(), legend(), (() => {
       const d = el("div"); d.id = "day-detail"; d.setAttribute("aria-live", "polite"); return d;
     })(), el("h3", "", "Minutes par jour"), minutesChart(), recapTable()),
-    replays(), skills(), sessionList());
+    replays(), skills(), sessionList(), calibrage(), videos(),
+  ].filter(Boolean));
   renderDetail();
 }
 
@@ -443,7 +506,8 @@ async function load() {
   if (res.status === 401) { location.href = "/login"; return; }
   if (!res.ok) {
     dash.replaceChildren(card(el("div", "empty",
-      "Aucun carnet importé. La progression apparaîtra ici après la première séance.")));
+      "Aucune progression pour l'instant : elle apparaîtra après la première séance. "
+      + "Si c'est un premier lancement, la mise en route se fait sur /onboarding.")));
     return;
   }
   data = await res.json();

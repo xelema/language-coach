@@ -18,8 +18,9 @@ from .auth import data_dir
 SKILLS = {"ecoute": "Écoute", "oral": "Oral", "ecrit": "Messages", "registre": "Registres"}
 INTERVALS = (1, 3, 7, 14, 30)
 # Ressenti déclaré à la clôture d'une séance : c'est lui qui déclenche
-# l'auto-critique du coach et le réglage de la séance suivante.
-FELT = ("trop_facile", "bien", "trop_dur")
+# l'auto-critique du coach et le réglage de la séance suivante. « non_dit »
+# garde la porte ouverte à une clôture où l'apprenant n'a rien voulu dire.
+FELT = ("trop_facile", "bien", "trop_dur", "non_dit")
 
 # Le profil créé à l'initialisation : ce qui rend le coaching pertinent sans
 # rien supposer de l'apprenant.
@@ -208,7 +209,7 @@ def validate(state):
         require(c["scores"]["oral"] is None or c["audio_assessed"], "Sans écoute réelle de l'audio, le score oral doit être null.")
 
     for c in state["calibration"]:
-        require(c.get("felt") in FELT, "Ressenti attendu : trop_facile, bien ou trop_dur.")
+        require(c.get("felt") in FELT, "Ressenti attendu : trop_facile, bien, trop_dur ou non_dit.")
         for field in ("observation", "change"):
             text_field(c.get(field), field)
         _optional_text(c.get("carry"), "carry", 2000)
@@ -470,6 +471,8 @@ def report_data(state, today):
                   for r in sorted(state["recordings"], key=lambda r: r["date"])]
     return {"date": today.isoformat(), "start": state["start"], "target": state.get("target"),
             "language": state.get("language"), "profile": state.get("profile"),
+            "calibrage": list(reversed(state["calibration"])),
+            "ressources": sorted(state["resources"], key=lambda r: r["date"]),
             "semaine": info["semaine"], "rang": info["rang"], "lp": info["lp"],
             "meilleurs_paliers": info["meilleurs_paliers"],
             "minutes_pratiquees": info["minutes_pratiquees"],

@@ -169,6 +169,7 @@ a.icon { display: grid; place-items: center; text-decoration: none; color: inher
 #dash h3 { margin: 1rem 0 .4rem; font-size: .95rem; }
 #dash p { margin: .4rem 0; }
 #dash .muted, #dash small { color: var(--muted); }
+.hint { color: var(--muted); font-size: .85rem; margin: .3rem 0 0; }
 #dash .muted { font-size: .85rem; }
 #dash a { color: var(--on-accent-soft); }
 .eyebrow { letter-spacing: .12em; text-transform: uppercase; font-size: .72rem; color: var(--faint); }

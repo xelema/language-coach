@@ -268,12 +268,26 @@ def kickoff(learner: str) -> str:
             "mission et le premier défi. Une interaction à la fois.)")
 
 
-def finish(learner: str) -> str:
-    return (f"({learner.capitalize()} a demandé de terminer la séance. Fais le récap — "
-            "acquis observé, priorité suivante, premier défi de la prochaine séance, "
-            "cartes réellement travaillées, ressenti demandé et réglage retenu — puis "
-            "appelle save_progress avec la session et l'auto-critique dans "
-            "'calibration'.)")
+FELT_LABELS = {"trop_facile": "trop facile", "bien": "juste bien",
+               "trop_dur": "trop dur", "non_dit": "non dit"}
+
+
+def finish(learner: str, felt: str = "", comment: str = "") -> str:
+    """L'instruction de clôture : le ressenti déclaré dans l'interface entre
+    tel quel, pour que l'auto-critique porte sur une donnée réelle et non sur
+    une impression reconstruite."""
+    if felt:
+        ressenti = (f"Ressenti déclaré par {learner} : {FELT_LABELS.get(felt, felt)}"
+                    + (f" — « {comment.strip()} »" if comment.strip() else "")
+                    + ". C'est exactement cette valeur qui va dans `felt` de la calibration, "
+                      "sans la reformuler ni la corriger.")
+    else:
+        ressenti = ("Ressenti non déclaré : mets `felt` à « non_dit » et appuie-toi "
+                    "uniquement sur ce que tu as observé.")
+    return (f"({learner.capitalize()} a demandé de terminer la séance. {ressenti} Fais le récap — "
+            "acquis observé, priorité suivante, premier défi de la prochaine séance, cartes "
+            "réellement travaillées et réglage retenu — puis appelle save_progress avec la "
+            "session et l'auto-critique dans 'calibration'.)")
 
 
 def today() -> str:
@@ -526,7 +540,11 @@ def _save_progress(thread: dict, patch) -> tuple[dict, str]:
         for introduced in sorted({c["introduced"] for c in patch["cards"]}):
             label += f" / ⬇ {code}-{introduced}.apkg"
     if patch.get("calibration"):
-        label += " · ⚙ calibrage enregistré"
+        # Le fil affiche le ressenti et le réglage : l'apprenant peut les
+        # contester, ce qui est le but de l'auto-critique.
+        for entry in patch["calibration"]:
+            label += (f" · ⚙ calibrage · {FELT_LABELS.get(entry.get('felt'), entry.get('felt') or '?')}"
+                      f" → {(entry.get('change') or '')[:100]}")
     return {"ok": True, "status": notebook.status(state, notebook.day(today()))}, label
 
 
@@ -635,14 +653,15 @@ def _audio_mime(rel_path: str) -> str:
         Path(rel_path).suffix.lower(), "audio/webm")
 
 
-def stream_events(thread: dict, event: str, *, text: str = "", audio: str = "", seconds=None):
+def stream_events(thread: dict, event: str, *, text: str = "", audio: str = "",
+                  seconds=None, felt: str = "", comment: str = ""):
     """User-side effects (rows, timer transitions), then the coach loop's events."""
     audio_rel = None
     if event == "start":
         pass  # kickoff row was written at session creation
     elif event == "finish":
         db.add_message(thread["id"], "user", "", kind="event", label="Fin de séance demandée",
-                       parts=[{"text": finish(learner_name()) + "\n\n" + meta_line(thread)}])
+                       parts=[{"text": finish(learner_name(), felt, comment) + "\n\n" + meta_line(thread)}])
     elif event == "message":
         returned = timer.user_message(thread["timer_id"]) if thread.get("timer_id") else {}
         extra = ""
