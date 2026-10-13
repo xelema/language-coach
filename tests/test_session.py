@@ -228,6 +228,48 @@ class SessionFlowTest(unittest.TestCase):
                          list(coach.languages.get("ko").register_ids))
         self.assertIn("change", props["calibration"]["items"]["required"])
 
+    def finish(self, felt=None, comment=None):
+        """Une vraie séance (un message échangé) puis la clôture demandée."""
+        tid = self.client.post("/api/session").json()["id"]
+        with patch("app.main.gemini.has_token", return_value=True), patch(
+            "app.coach.gemini.generate_turn", side_effect=text_turn("D'accord.")):
+            self.client.post(f"/api/threads/{tid}/turn", json={"event": "message", "text": "bonjour"})
+            body = {"event": "finish"}
+            if felt is not None:
+                body["felt"] = felt
+            if comment is not None:
+                body["comment"] = comment
+            return tid, self.client.post(f"/api/threads/{tid}/turn", json=body)
+
+    def test_finish_carries_the_declared_ressenti_into_the_closing_instruction(self):
+        tid, res = self.finish("trop_facile", "un peu trop court")
+        self.assertEqual(res.status_code, 200, res.text)
+        instruction = self.closing_instruction(tid)
+        self.assertIn("Ressenti déclaré", instruction)
+        self.assertIn("trop facile", instruction)
+        self.assertIn("un peu trop court", instruction)
+
+    def test_finish_without_ressenti_asks_for_non_dit(self):
+        tid, _ = self.finish()
+        self.assertIn("non_dit", self.closing_instruction(tid))
+
+    def test_unknown_ressenti_is_refused(self):
+        _, res = self.finish("bof")
+        self.assertEqual(res.status_code, 400)
+
+    def test_calibration_chip_shows_its_content_in_the_thread(self):
+        result, label = coach._save_progress({}, {"calibration": [{
+            "id": "cal-1", "date": coach.today(), "felt": "trop_facile",
+            "observation": "réponses immédiates, aucune hésitation",
+            "change": "production plus longue et moins d'indices"}]})
+        self.assertTrue(result["ok"], result)
+        self.assertIn("trop facile", label)
+        self.assertIn("production plus longue", label)
+
+    def closing_instruction(self, tid):
+        rows = [m for m in db.list_messages(tid) if m["kind"] == "event" and m["parts"]]
+        return " ".join(json.loads(m["parts"])[0]["text"] for m in rows)
+
     def test_validation_error_goes_back_to_model(self):
         res = self.client.post("/api/session")
         tid = res.json()["id"]

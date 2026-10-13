@@ -205,6 +205,14 @@ def turn(thread_id: int, body: dict):
     event = body.get("event", "message")
     text = (body.get("text") or "").strip()
     audio = (body.get("audio") or "").strip()
+    # Ressenti de fin de séance : déclaré dans l'interface, il part tel quel dans
+    # l'instruction de clôture (et devient le `felt` de l'auto-critique).
+    felt = str(body.get("felt") or "").strip()
+    comment = str(body.get("comment") or "").strip()[:500]
+    if felt and felt not in notebook.FELT:
+        return JSONResponse({"detail": "ressenti inconnu"}, status_code=400)
+    if felt == "non_dit":
+        felt = ""
     if event not in ("start", "finish", "message"):
         return JSONResponse({"detail": "événement inconnu"}, status_code=400)
     if event in ("start", "finish") and thread.get("kind") != "session":
@@ -225,7 +233,7 @@ def turn(thread_id: int, body: dict):
             return
         try:
             for ev in coach.stream_events(thread, event, text=text, audio=audio,
-                                          seconds=body.get("seconds")):
+                                          seconds=body.get("seconds"), felt=felt, comment=comment):
                 yield json.dumps(ev, ensure_ascii=False) + "\n"
         except Exception as e:
             yield json.dumps({"type": "error", "message": str(e)}, ensure_ascii=False) + "\n"

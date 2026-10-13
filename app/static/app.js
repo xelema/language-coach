@@ -474,7 +474,34 @@ $("logout").onclick = async () => {
   location.href = "/login";
 };
 
-finishBtn.onclick = () => { if (confirm("Terminer la séance ?")) streamTurn({ event: "finish" }); };
+// ---- ressenti de fin de séance ----
+// Le ressenti part avec l'instruction de clôture : le coach l'écrit tel quel
+// dans sa calibration au lieu d'inventer une impression sur la séance.
+const feltDlg = $("feltdlg"), feltComment = $("felt-comment");
+let feltPick = "";
+
+function showFelt() {
+  feltPick = "";
+  feltComment.value = "";
+  for (const b of feltDlg.querySelectorAll("[data-felt]")) b.setAttribute("aria-pressed", "false");
+  feltDlg.showModal();
+}
+
+for (const btn of feltDlg.querySelectorAll("[data-felt]")) {
+  btn.onclick = () => {
+    feltPick = feltPick === btn.dataset.felt ? "" : btn.dataset.felt;  // re-cliquer annule le choix
+    for (const other of feltDlg.querySelectorAll("[data-felt]"))
+      other.setAttribute("aria-pressed", String(other.dataset.felt === feltPick));
+  };
+}
+$("felt-go").onclick = () => {
+  feltDlg.close();
+  streamTurn({ event: "finish", felt: feltPick, comment: feltComment.value.trim() });
+};
+$("felt-cancel").onclick = () => feltDlg.close();
+feltDlg.onclick = (e) => { if (e.target === feltDlg) feltDlg.close(); };
+
+finishBtn.onclick = showFelt;
 
 pauseBtn.onclick = async () => {
   const paused = timerState && timerState.state === "pause";
@@ -801,6 +828,7 @@ function showSettings(s) {
   catalogs = s.models;
   setProvider.value = s.provider;
   fillModels(s.provider, s.model);
+  $("set-timezone").value = s.timezone || "";
 }
 
 async function saveSettings(body) {
@@ -810,6 +838,60 @@ async function saveSettings(body) {
   if (!res.ok) { setMsg.textContent = "Erreur : " + (s.detail || res.status); return; }
   showSettings(s);
 }
+
+// Voix de synthèse de la langue du carnet (Cartesia) : la liste vient de l'API,
+// donc une langue ajoutée plus tard n'a rien à changer ici.
+async function fillVoices() {
+  const sel = $("set-voice"), hint = $("set-voice-hint");
+  sel.replaceChildren(Object.assign(document.createElement("option"),
+    { value: "", textContent: "Voix du paquet de langue" }));
+  const res = await fetch("/api/voices");
+  if (!res.ok) {
+    hint.textContent = "Voix indisponible : renseigner CARTESIA_API_KEY.";
+    sel.disabled = true;
+    return;
+  }
+  sel.disabled = false;
+  const data = await res.json();
+  for (const v of data.voices)
+    sel.append(Object.assign(document.createElement("option"),
+      { value: v.id, textContent: v.name ? `${v.name}${v.gender ? " · " + v.gender : ""}` : v.id }));
+  sel.value = data.current || "";
+  hint.textContent = data.voices.length
+    ? "Voix du texte cliquable dans le fil."
+    : "Aucune voix listée pour cette langue : le paquet décide.";
+}
+
+// Profil : objectif, niveau, cadence, échéance. Le niveau vérifié par le
+// diagnostic est conservé tel quel (le coach seul le met à jour).
+let profileCache = null;
+
+async function fillProfile() {
+  const p = await (await fetch("/api/profile")).json();
+  profileCache = p.profile || null;
+  const levels = (p.languages.find((l) => l.code === p.language) || {}).levels || [];
+  $("set-niveau").replaceChildren(...levels.map((lv) =>
+    Object.assign(document.createElement("option"),
+      { value: lv.code, textContent: `${lv.code} — ${lv.label}`,
+        selected: lv.code === (profileCache && profileCache.level) })));
+  $("set-objectif").value = (profileCache && profileCache.objective) || "";
+  $("set-cadence").value = (profileCache && profileCache.cadence) || "";
+  $("set-echeance").value = p.deadline || "";
+}
+
+$("set-profile-save").onclick = async () => {
+  if (!profileCache) return;
+  const body = { profile: { ...profileCache,
+      level: $("set-niveau").value || profileCache.level,
+      objective: $("set-objectif").value.trim() || profileCache.objective,
+      cadence: $("set-cadence").value.trim() },
+    deadline: $("set-echeance").value };
+  const res = await fetch("/api/profile", { method: "POST",
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const data = await res.json();
+  setMsg.textContent = res.ok ? "Profil enregistré." : "Erreur : " + (data.detail || res.status);
+  if (res.ok) profileCache = data.profile;
+};
 
 // Mic picker: the saved deviceId is localStorage.micId, "" means auto.
 const setMic = $("set-mic");
@@ -842,9 +924,13 @@ $("prefs").onclick = async () => {
   setMsg.textContent = "";
   prefsDlg.showModal();
   fillMics();
+  fillVoices();
+  fillProfile();
 };
 setProvider.onchange = () => saveSettings({ provider: setProvider.value });
 setModel.onchange = () => saveSettings({ model: setModel.value });
+$("set-timezone").onchange = () => saveSettings({ timezone: $("set-timezone").value.trim() });
+$("set-voice").onchange = () => saveSettings({ voice: $("set-voice").value });
 $("prefs-close").onclick = () => prefsDlg.close();
 prefsDlg.onclick = (e) => { if (e.target === prefsDlg) prefsDlg.close(); };
 

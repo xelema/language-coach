@@ -111,8 +111,48 @@
     <label for="set-mic">Micro</label>
     <select id="set-mic"><option value="">Automatique</option></select>
     <small>Auto : micro intégré sur téléphone, casque branché sur PC.</small>
+    <h3>Voix et fuseau</h3>
+    <label for="set-voice">Voix de synthèse</label>
+    <select id="set-voice"></select>
+    <small id="set-voice-hint">Voix du texte cliquable dans le fil.</small>
+    <label for="set-timezone">Fuseau horaire</label>
+    <input id="set-timezone" type="text" list="tz-list" placeholder="Europe/Paris" autocomplete="off">
+    <datalist id="tz-list">
+      <option value="Europe/Paris"></option>
+      <option value="Europe/London"></option>
+      <option value="America/New_York"></option>
+      <option value="Asia/Tokyo"></option>
+      <option value="Asia/Seoul"></option>
+      <option value="UTC"></option>
+    </datalist>
+    <h3>Profil d'apprentissage</h3>
+    <label for="set-niveau">Niveau</label>
+    <select id="set-niveau"></select>
+    <label for="set-objectif">Objectif</label>
+    <input id="set-objectif" type="text" autocomplete="off">
+    <label for="set-cadence">Cadence</label>
+    <input id="set-cadence" type="text" autocomplete="off">
+    <label for="set-echeance">Échéance (facultatif)</label>
+    <input id="set-echeance" type="date">
+    <button id="set-profile-save">Enregistrer le profil</button>
     <p id="set-msg" role="status"></p>
     <button id="prefs-close">Fermer</button>
+  </nav>
+</dialog>
+<dialog id="feltdlg" aria-label="Ressenti de la séance">
+  <nav>
+    <h2>Comment c'était ?</h2>
+    <p class="hint">Le coach s'en sert pour régler la difficulté de la prochaine séance. Tu peux
+      terminer sans rien dire.</p>
+    <div class="row" id="felt-choice" role="group" aria-label="Ressenti">
+      <button type="button" data-felt="trop_facile" aria-pressed="false">Trop facile</button>
+      <button type="button" data-felt="bien" aria-pressed="false">Juste bien</button>
+      <button type="button" data-felt="trop_dur" aria-pressed="false">Trop dur</button>
+    </div>
+    <input id="felt-comment" type="text" maxlength="300" autocomplete="off"
+           placeholder="Un mot de plus ? (facultatif)" aria-label="Commentaire sur la séance">
+    <button id="felt-go" class="primary">Terminer la séance</button>
+    <button id="felt-cancel">Annuler</button>
   </nav>
 </dialog>
 <script src="/static/vendor/marked.umd.js"></script>

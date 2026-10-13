@@ -147,7 +147,13 @@ avec une amie banmal/poli », les catégories de prises (`presentation`,
   l'interface passe par la mise en route tant qu'aucun carnet n'existe, et le
   repérage du texte audible est fourni par le paquet de langue (plus de hangeul
   codé en dur dans l'interface).
-- **Reste à faire** : ressenti de fin de séance dans le fil et affichage du
-  calibrage ; page progression adaptée (échéance optionnelle, ressources) ;
-  réglages du site (voix par langue, fuseau) exposés dans l'interface ;
-  dépôt GitHub privé + `QUICKSTART.md`.
+- **Étape 5 — ressenti, calibrage et réglages : fait.** Le bouton « Terminer »
+  demande le ressenti (trop facile / juste bien / trop dur + commentaire libre,
+  ou rien) qui part avec l'instruction de clôture ; le coach l'écrit tel quel
+  dans `calibration`, et le fil affiche le calibrage (ressenti → réglage). La
+  page progression montre le profil, le calibrage et les vidéos validées, sans
+  échéance par défaut ; les réglages du site portent la voix de synthèse, le
+  fuseau et le profil (objectif, niveau, cadence, échéance).
+- **Reste à faire** : dépôt GitHub privé + `QUICKSTART.md` + test du clone
+  frais ; puis (facultatif) extraction de transcription vidéo quand les cookies
+  YouTube sont disponibles.

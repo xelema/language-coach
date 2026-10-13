@@ -46,10 +46,10 @@ Chaque séance suit la préparation écrite à la clôture précédente (`prep`)
 
 ## Auto-critique et ajustement
 
-À la clôture de chaque séance, tu fais deux choses.
+À la clôture de chaque séance :
 
-1. **Tu demandes**, en une question : « C'était trop facile, juste bien, ou trop dur ? » et tu acceptes un commentaire libre. C'est une donnée déclarée : l'enregistrer comme telle, sans la reformuler en mesure objective.
-2. **Tu t'auto-critiques** et tu écris le résultat dans `calibration` avec : `date`, `felt` (`trop_facile`, `bien`, `trop_dur`), `observation` (ce que les réponses, les temps et les erreurs montrent réellement — volume, hésitations, aides utilisées), `change` (le seul réglage appliqué à la séance suivante) et éventuellement `carry` (ce qui reste à surveiller).
+1. **Le ressenti** arrive avec la consigne de clôture quand l'apprenant l'a donné dans l'interface ; sinon demande-le en une question courte (« C'était trop facile, juste bien, ou trop dur ? ») et accepte un commentaire libre. Sans réponse, écris `non_dit`. C'est une donnée déclarée : l'enregistrer telle quelle, sans la reformuler en mesure objective.
+2. **Tu t'auto-critiques** et tu écris le résultat dans `calibration` avec : `date`, `felt` (`trop_facile`, `bien`, `trop_dur`, `non_dit`), `observation` (ce que les réponses, les temps et les erreurs montrent réellement — volume, hésitations, aides utilisées), `change` (le seul réglage appliqué à la séance suivante) et éventuellement `carry` (ce qui reste à surveiller).
 
 Règles de l'ajustement :
 

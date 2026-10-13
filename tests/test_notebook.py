@@ -187,6 +187,12 @@ class NotebookTest(unittest.TestCase):
         self.assertEqual(notebook.status(notebook.load(), date(2026, 9, 7))["calibrage"][0]["change"], change)
         rejected(lambda: notebook.apply_update({"calibration": [dict(entry, id="cal-2", felt="ok")]}))
         rejected(lambda: notebook.apply_update({"calibration": [dict(entry, id="cal-3", change="")]}))
+        # Une clôture sans ressenti reste représentable, et la page progression
+        # reçoit l'historique de calibrage dans son rapport.
+        notebook.apply_update({"calibration": [dict(entry, id="cal-4", felt="non_dit")]})
+        report = notebook.report_data(notebook.load(), date(2026, 9, 8))
+        self.assertEqual([c["felt"] for c in report["calibrage"]][:1], ["non_dit"])
+        self.assertEqual(report["ressources"], [])
 
     def test_profile_can_be_refined_later(self):
         seed(notebook.new_notebook("ko", {"objective": "o", "level": "A1"}, start="2026-09-07"))
