@@ -12,7 +12,7 @@ Mise en route détaillée : **[QUICKSTART.md](QUICKSTART.md)**.
 ```bash
 git clone https://github.com/xelema/language-coach.git
 cd language-coach
-./run.sh                 # http://127.0.0.1:51121
+./run.sh                 # http://localhost:51121
 ```
 
 1. **Générer le mot de passe du site** — sans lui, la page de connexion refuse
@@ -24,18 +24,24 @@ cd language-coach
    Collez la ligne dans `.env` **en retirant le `#` du début** (le modèle
    `.env.example` l'a commentée pour ne pas configurer un mot de passe par
    défaut). Marche à l'identique sous Linux, macOS et Git Bash.
-2. **Ouvrir `http://127.0.0.1:51121`**, se connecter, puis cliquer sur
+2. **Ouvrir `http://localhost:51121`**, se connecter, puis cliquer sur
    **Connexion Google** (`/oauth/login`) : c'est le chemin d'accès au modèle
    Gemini, via l'abonnement Antigravity, sans clé API. Le jeton reste dans
-   `data/`, il ne part jamais dans le navigateur.
+   `data/`, il ne part jamais dans le navigateur. L'application le réclame
+   d'elle-même (dernier écran de la mise en route, bandeau dans le fil, et
+   Paramètres) tant qu'il manque.
 3. **`CARTESIA_API_KEY` dans `.env`** pour que le texte de la langue cible soit
    audible, puis choisir la voix dans les Paramètres du site.
 4. **Suivre la mise en route** (`/onboarding`) : langue, objectif, niveau,
-   cadence, échéance éventuelle, accès audio, et — si vous le souhaitez — des
-   vidéos d'écoute issues d'une vraie recherche.
+   cadence, échéance éventuelle, et — si vous le souhaitez — des vidéos d'écoute
+   issues d'une vraie recherche. Le dernier écran propose la **connexion Google**
+   si elle n'a pas déjà été faite. L'écoute et la parole, elles, se déclarent au
+   début de chaque séance (elles changent d'un jour à l'autre).
 
-Le port **51121** n'est pas un détail : la redirection OAuth de Google est
-enregistrée dessus. Changer de port oblige à refaire la connexion Google.
+Passez par **`http://localhost:51121`** et non `127.0.0.1` : le retour de Google
+est épinglé sur `localhost`, donc la session doit vivre sur ce nom d'hôte.
+Le port **51121** n'est pas un détail non plus : la redirection OAuth y est
+enregistrée. Changer de port oblige à refaire la connexion Google.
 
 ### Ce qui dégrade quoi
 

@@ -21,7 +21,7 @@ cd language-coach
 ./run.sh
 ```
 
-Le premier lancement installe tout puis affiche `http://127.0.0.1:51121`.
+Le premier lancement installe tout puis affiche `http://localhost:51121`.
 **Le port 51121 n'est pas un détail** : la redirection OAuth de Google est
 enregistrée dessus pour l'application Antigravity. Si ce port est occupé chez
 vous, vous pouvez changer de port (`LC_PORT=...`) mais la connexion Google
@@ -50,7 +50,7 @@ garde la priorité.
    `./run.sh` après modification du `.env` (il n'est lu qu'au démarrage).
 2. **Voix** — `CARTESIA_API_KEY=...`. La voix par langue se choisit ensuite dans
    les Paramètres du site (elle est résolue toute seule au premier usage).
-3. **Modèle** — rien à faire par défaut : ouvrez `http://127.0.0.1:51121`,
+3. **Modèle** — rien à faire par défaut : ouvrez `http://localhost:51121`,
    connectez-vous, puis cliquez sur le lien **Connexion Google** (`/oauth/login`).
    Le jeton reste dans `data/`, il ne part jamais dans le navigateur.
 
@@ -68,10 +68,18 @@ Au premier accès, l'application ouvre `/onboarding` et demande :
   première séance commence par un diagnostic court qui le vérifie et le corrige ;
 - votre **nom** (facultatif), la **cadence** souhaitée, un **objectif daté**
   (facultatif : aucune échéance n'est imposée par défaut) ;
-- si vous pouvez **écouter** et **parler** pendant les séances ;
 - *(facultatif)* des **vidéos** : le bouton « Chercher des vidéos » lance une
   vraie recherche dans la langue choisie, vous cochez celles qui vous semblent
   adaptées, et seules celles-là entrent dans le carnet.
+
+Le dernier écran propose la **connexion Google** si elle n'a pas encore été faite :
+sans elle, le coach ne peut pas répondre. La même connexion reste accessible
+depuis les Paramètres, et un bandeau la rappelle dans le fil tant qu'elle manque.
+
+L'écoute et la parole ne sont pas demandées ici : elles se déclarent à
+l'ouverture de **chaque** séance (case « je peux écouter », « je peux parler »),
+parce qu'elles changent d'un jour à l'autre — un trajet en train n'autorise pas
+les mêmes exercices qu'une séance au calme.
 
 Tout est modifiable ensuite dans **Paramètres** (nom, niveau, objectif, cadence,
 échéance, voix, fuseau horaire, fournisseur et modèle).
