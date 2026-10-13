@@ -1,6 +1,6 @@
-"""Gemini over Antigravity OAuth, ported from poc/antigravity-chat.mjs.
+"""Gemini over Antigravity OAuth (PKCE login on localhost:51121).
 
-PKCE login on localhost:51121, token refresh, loadCodeAssist project lookup,
+Token refresh, loadCodeAssist project lookup,
 streamGenerateContent SSE parsing with thought parts skipped.
 Token stored under data/ (gitignored), never sent to the browser.
 
@@ -208,11 +208,3 @@ def generate_turn(contents: list[dict], system: str | None = None,
                 continue
             raise
     return parts
-
-
-def stream_reply(contents: list[dict]):
-    """Yields the model's visible text chunks (thought parts skipped)."""
-    chunks = []
-    generate_turn(contents, system="You are a helpful Korean language coach.",
-                  on_text=chunks.append)
-    yield from chunks
